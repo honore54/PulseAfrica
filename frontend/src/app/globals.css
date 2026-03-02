@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&display=swap');
+
+/* ═══════════════════════════════════════════════════
+   PULSEAFRICA — HEAVEN WHITE DESIGN SYSTEM
+   
+   Philosophy: White is not empty — it IS the design.
+   12 whites. Warm tinted shadows. Jewel accents.
+   Images dissolve into white. Everything breathes.
+═══════════════════════════════════════════════════ */
+
+:root {
+  /* ── The 12 Whites ── */
+  --pure:   #ffffff;
+  --cloud:  #fdfeff;
+  --mist:   #f8faff;
+  --pearl:  #f3f6ff;
+  --ivory:  #edf2ff;
+  --lace:   #e6ecff;
+  --silk:   #dde5f7;
+  --warm0:  #fffef9;
+  --warm1:  #fffbf0;
+  --warm2:  #fff6e0;
+
+  /* ── Ink — deep navy, never black ── */
+  --ink:    #0c1a3a;
+  --ink2:   #1a2d52;
+  --ink3:   #2c4070;
+  --ink4:   #455a8a;
+  --ink5:   #6477a0;
+  --ink6:   #8d9dbe;
+  --ink7:   #b8c3d8;
+  --ink8:   #d8dfe8;
+
+  /* ── Jewel accents ── */
+  --amber:  #b07900; --amber2:#cc9200; --amber3:#f5b700; --amber4:#fce07a; --amber5:#fff8dc; --amber6:#fffae8;
+  --sap:    #1a56db; --sap2:#3b76f7;   --sap3:#a3beff;   --sap4:#dbeafe;   --sap5:#eff5ff;
+  --ruby:   #c81240; --ruby2:#f43060;  --ruby3:#ffa0b8;  --ruby4:#ffe4ec;  --ruby5:#fff5f8;
+  --jade:   #0a8f6c; --jade2:#2db891;  --jade3:#92e5cc;  --jade4:#e0faf3;  --jade5:#f0fdf9;
+  --violet: #6d28d9; --violet2:#9461f5;--violet3:#d8caff;--violet4:#f3f0ff;
+  --copper: #9a4500; --copper2:#c45e00;--copper3:#f59a60;--copper4:#fde8d8;--copper5:#fff6f0;
+
+  /* ── Shadows — warm tinted ── */
+  --sh1: 0 1px 2px rgba(12,26,58,.03), 0 3px 10px rgba(12,26,58,.05);
+  --sh2: 0 2px 6px rgba(12,26,58,.04), 0 8px 28px rgba(12,26,58,.07);
+  --sh3: 0 6px 20px rgba(12,26,58,.06), 0 20px 56px rgba(12,26,58,.09);
+  --sh4: 0 16px 48px rgba(12,26,58,.08), 0 40px 96px rgba(12,26,58,.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--pure);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  /* Subtle paper texture */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.016'/%3E%3C/svg%3E");
+}
+
+/* ── Heaven atmospheric light (fixed backdrop) ── */
+.heaven {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.h-apex {
+  position: absolute; top: -30%; left: 50%; transform: translateX(-50%);
+  width: 180%; height: 90%;
+  background: radial-gradient(ellipse at 50% 5%,
+    rgba(210,228,255,.75) 0%, rgba(230,240,255,.45) 22%,
+    rgba(245,250,255,.2) 48%, transparent 72%);
+}
+.h-amber {
+  position: absolute; bottom: -15%; left: -8%; width: 65%; height: 65%;
+  background: radial-gradient(ellipse, rgba(255,236,175,.4) 0%, rgba(255,248,210,.2) 40%, transparent 70%);
+  animation: heavenDrift 16s ease-in-out infinite;
+}
+.h-azure {
+  position: absolute; top: 15%; right: -12%; width: 55%; height: 55%;
+  background: radial-gradient(ellipse, rgba(185,215,255,.3) 0%, rgba(215,233,255,.12) 45%, transparent 70%);
+  animation: heavenDrift 20s ease-in-out infinite reverse;
+}
+.h-rose {
+  position: absolute; top: 42%; left: 30%; width: 48%; height: 38%;
+  background: radial-gradient(ellipse, rgba(255,215,228,.12) 0%, transparent 65%);
+  animation: heavenDrift 24s ease-in-out infinite 4s;
+}
+.h-jade {
+  position: absolute; bottom: 5%; right: 8%; width: 40%; height: 35%;
+  background: radial-gradient(ellipse, rgba(190,245,225,.12) 0%, transparent 65%);
+  animation: heavenDrift 18s ease-in-out infinite 8s reverse;
+}
+
+/* ── Keyframes ── */
+@keyframes heavenDrift {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%       { transform: translate(18px,-26px) scale(1.05); }
+  66%       { transform: translate(-12px,13px) scale(.96); }
+}
+@keyframes fadeUp    { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn    { from { opacity:0; } to { opacity:1; } }
+@keyframes tickerRun { 0%{ transform:translateX(0); } 100%{ transform:translateX(-50%); } }
+@keyframes pulse     { 0%,100%{ opacity:.5; transform:scale(1); } 50%{ opacity:1; transform:scale(1.3); } }
+@keyframes float     { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+@keyframes shineSwipe{ 0%{ left:-100%; } 100%{ left:200%; } }
+@keyframes spin      { to{ transform:rotate(360deg); } }
+@keyframes skeleton  { 0%,100%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
+@keyframes shimmer   { 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
+
+/* ── Skeleton loader ── */
+.skel {
+  background: linear-gradient(90deg, var(--pearl) 25%, var(--ivory) 50%, var(--pearl) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 8px;
+}
+
+/* ── Chip (category badge) ── */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 100px;
+  font-family: 'Space Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; white-space: nowrap;
+}
+.chip-politics     { background:var(--ruby5);    color:var(--ruby);    border:1px solid rgba(200,18,64,.14); }
+.chip-sports       { background:var(--jade5);    color:var(--jade);    border:1px solid rgba(10,143,108,.14); }
+.chip-entertainment{ background:var(--violet4);  color:var(--violet);  border:1px solid rgba(109,40,217,.14); }
+.chip-africa       { background:var(--copper5);  color:var(--copper2); border:1px solid rgba(196,94,0,.14); }
+.chip-technology   { background:var(--sap5);     color:var(--sap);     border:1px solid rgba(26,86,219,.14); }
+.chip-business     { background:var(--amber6);   color:var(--amber);   border:1px solid rgba(176,121,0,.14); }
+
+/* ── Utility ── */
+.z-content { position: relative; z-index: 10; }
+
+/* ── Article body (from DB content) ── */
+.article-body { font-size: 16px; color: var(--ink4); line-height: 1.85; font-weight: 300; }
+.article-body h2 {
+  font-family: 'Cormorant', serif; font-size: 24px; font-weight: 500; color: var(--ink);
+  margin: 32px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--lace);
+}
+.article-body h3 { font-family: 'Cormorant', serif; font-size: 20px; font-weight: 500; color: var(--ink2); margin: 24px 0 8px; }
+.article-body p  { margin-bottom: 18px; }
+.article-body blockquote {
+  border-left: 3px solid var(--amber3); padding: 12px 20px;
+  margin: 24px 0; background: var(--warm1); border-radius: 0 8px 8px 0;
+  font-family: 'Cormorant', serif; font-size: 18px; font-style: italic; color: var(--ink2);
+}
+.article-body strong { font-weight: 600; color: var(--ink2); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .hide-mobile { display: none !important; }
+  .nav-links { display: none !important; }
+  .hero-grid { grid-template-columns: 1fr !important; }
+  .hero-right-col { display: none; }
+  .grid-primary { grid-template-columns: 1fr 1fr !important; }
+  .card-big { grid-row: auto !important; grid-column: span 2 !important; }
+  .grid-sec { grid-template-columns: repeat(2,1fr) !important; }
+  .cat-grid { grid-template-columns: repeat(3,1fr) !important; }
+  .two-col { grid-template-columns: 1fr !important; }
+  .sidebar { display: none; }
+  .foot-grid { grid-template-columns: 1fr 1fr !important; }
+  .topbar, .hero-wrap, .content-wrap, .breaking-wrap { padding-left: 20px !important; padding-right: 20px !important; }
+}
+@media (max-width: 600px) {
+  .grid-primary { grid-template-columns: 1fr !important; }
+  .card-big { grid-column: auto !important; }
+  .cat-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .foot-grid { grid-template-columns: 1fr !important; }
+}
