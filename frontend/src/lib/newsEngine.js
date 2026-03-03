@@ -197,7 +197,13 @@ Respond ONLY with a valid JSON object. No markdown fences, no preamble, no text 
     }
   )
   const json = await res.json()
-  const text = json.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  console.log('[GEMINI] Raw response:', JSON.stringify(json).slice(0, 300))
+
+  if (json.error) throw new Error(`Gemini error: ${json.error.message}`)
+  if (!json.candidates || json.candidates.length === 0) throw new Error('Gemini returned no candidates')
+
+  const text = json.candidates[0]?.content?.parts?.[0]?.text || ''
+  if (!text) throw new Error('Gemini returned empty text')
   const clean = text.replace(/```json|```/g, '').trim()
   const parsed = JSON.parse(clean)
 
