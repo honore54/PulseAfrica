@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
 import slugify from 'slugify'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const GEMINI_KEY = process.env.GEMINI_API_KEY
 
 // ── Category config ───────────────────────────────────────
 export const CATEGORIES = [
@@ -186,13 +185,19 @@ Respond ONLY with a valid JSON object. No markdown fences, no preamble, no text 
   "seo_desc": "150-160 char meta description with clear value proposition"
 }`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2500,
-    messages: [{ role: 'user', content: prompt }],
-  })
-
-  const text = response.content.map(b => b.text || '').join('')
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 2500, temperature: 0.8 }
+      })
+    }
+  )
+  const json = await res.json()
+  const text = json.candidates?.[0]?.content?.parts?.[0]?.text || ''
   const clean = text.replace(/```json|```/g, '').trim()
   const parsed = JSON.parse(clean)
 
