@@ -171,11 +171,11 @@ Respond ONLY with a valid JSON object. No markdown fences, no preamble, no text 
   "summary_fr": "Résumé en 2 phrases en français. 1ère = fait principal, 2ème = contexte.",
   "summary_rw": "Incamake y'interuro 2 mu Kinyarwanda.",
   
-  "content_en": "Full English article, 550-750 words. Use ## for 2-3 section headings. Include at least one direct quote from a named African official or expert. End with a forward-looking paragraph. African perspective throughout.",
+  "content_en": "Full English article, 300-400 words. Use ## for 2-3 section headings. Include at least one direct quote from a named African official or expert. End with a forward-looking paragraph. African perspective throughout.",
   
-  "content_fr": "Article complet en français, 450-550 mots. Utilise ## pour les sous-titres. Style RFI/Le Monde Afrique — fluide, professionnel, pas une traduction mot-à-mot.",
+  "content_fr": "Article complet en français, 250-300 mots. Utilise ## pour les sous-titres. Style RFI/Le Monde Afrique — fluide, professionnel, pas une traduction mot-à-mot.",
   
-  "content_rw": "Ingingo yuzuye mu Kinyarwanda, amagambo 350-450. Koresha ## kubara interuro. Ikiganiro cy'ikiremwa, ntabwo ari guhindura. Umunyarwanda azibona muri iki kiganiro.",
+  "content_rw": "Ingingo yuzuye mu Kinyarwanda, amagambo 200-250. Koresha ## kubara interuro. Ikiganiro cy'ikiremwa, ntabwo ari guhindura. Umunyarwanda azibona muri iki kiganiro.",
   
   "tags": ["tag1","tag2","tag3","tag4","tag5"],
   "read_time": 4,
@@ -186,7 +186,7 @@ Respond ONLY with a valid JSON object. No markdown fences, no preamble, no text 
 }`
 
   const res = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${GEMINI_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
