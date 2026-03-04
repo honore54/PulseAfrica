@@ -154,7 +154,7 @@ export async function generateArticle(category) {
   const prompt = `You are PulseAfrica, Africa's premier AI-powered news publication. Generate a compelling, realistic news article for the "${catMeta.label}" category with a clear African focus.
 
 ${headlineCtx}
-
+IMPORTANT: Do NOT write about Nigeria every time. Rotate between: Rwanda, Kenya, Ghana, Ethiopia, South Africa, Senegal, Tanzania, Egypt, Morocco, Côte d'Ivoire, Uganda, Cameroon, Zimbabwe, Mozambique. Pick a DIFFERENT country each time.
 REQUIREMENTS:
 - Make it feel like REAL breaking news: specific country names, real-sounding officials, concrete statistics, expert quotes
 - Strong African perspective — what does this mean for African citizens and communities?
