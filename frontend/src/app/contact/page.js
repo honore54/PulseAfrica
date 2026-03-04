@@ -18,22 +18,22 @@ export default function ContactPage() {
 
           <div style={{ background:'var(--pearl)', borderRadius:16, padding:'28px 32px', border:'1px solid var(--lace)' }}>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:10 }}>GENERAL ENQUIRIES</div>
-            <a href="mailto:hello@pulseafrica.com" style={{ fontFamily:"'Cormorant',serif", fontSize:24, color:'var(--ink)', textDecoration:'none', fontWeight:400 }}>
-              hello@pulseafrica.com
+            <a href="mailto:honoremugisha@gmail.com" style={{ fontFamily:"'Cormorant',serif", fontSize:24, color:'var(--ink)', textDecoration:'none', fontWeight:400 }}>
+              honoremugisha54@gmail.com
             </a>
           </div>
 
           <div style={{ background:'var(--pearl)', borderRadius:16, padding:'28px 32px', border:'1px solid var(--lace)' }}>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:10 }}>ADVERTISING & PARTNERSHIPS</div>
-            <a href="mailto:ads@pulseafrica.com" style={{ fontFamily:"'Cormorant',serif", fontSize:24, color:'var(--ink)', textDecoration:'none', fontWeight:400 }}>
-              ads@pulseafrica.com
+            <a href="mailto:honoremugisha@gmail.com" style={{ fontFamily:"'Cormorant',serif", fontSize:24, color:'var(--ink)', textDecoration:'none', fontWeight:400 }}>
+              honoremugisha@gmail.com
             </a>
           </div>
 
           <div style={{ background:'var(--pearl)', borderRadius:16, padding:'28px 32px', border:'1px solid var(--lace)' }}>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:10 }}>PRIVACY & DATA</div>
-            <a href="mailto:privacy@pulseafrica.com" style={{ fontFamily:"'Cormorant',serif", fontSize:24, color:'var(--ink)', textDecoration:'none', fontWeight:400 }}>
-              privacy@pulseafrica.com
+            <a href="mailto:honoremugisha@gmail.com" style={{ fontFamily:"'Cormorant',serif", fontSize:24, color:'var(--ink)', textDecoration:'none', fontWeight:400 }}>
+              honoremugisha@gmail.com
             </a>
           </div>
 
