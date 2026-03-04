@@ -1,6 +1,6 @@
 import slugify from 'slugify'
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY
+const GROQ_KEY = process.env.GROQ_API_KEY
 
 // ── Category config ───────────────────────────────────────
 export const CATEGORIES = [
@@ -185,25 +185,24 @@ Respond ONLY with a valid JSON object. No markdown fences, no preamble, no text 
   "seo_desc": "150-160 char meta description with clear value proposition"
 }`
 
-  const res = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 2500, temperature: 0.8 }
-      })
-    }
-  )
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2500,
+      temperature: 0.8
+    })
+  })
   const json = await res.json()
-  console.log('[GEMINI] Raw response:', JSON.stringify(json).slice(0, 300))
-
-  if (json.error) throw new Error(`Gemini error: ${json.error.message}`)
-  if (!json.candidates || json.candidates.length === 0) throw new Error('Gemini returned no candidates')
-
-  const text = json.candidates[0]?.content?.parts?.[0]?.text || ''
-  if (!text) throw new Error('Gemini returned empty text')
+  console.log('[GROQ] Raw response:', JSON.stringify(json).slice(0, 300))
+  if (json.error) throw new Error(`Groq error: ${json.error.message}`)
+  const text = json.choices?.[0]?.message?.content || ''
+  if (!text) throw new Error('Groq returned empty text')
   const clean = text.replace(/```json|```/g, '').trim()
   const parsed = JSON.parse(clean)
 
