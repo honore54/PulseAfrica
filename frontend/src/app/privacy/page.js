@@ -9,7 +9,7 @@ export default function PrivacyPage() {
       <Navbar lang="en" />
       <div style={{ maxWidth:800, margin:'0 auto', padding:'80px 40px', position:'relative', zIndex:10 }}>
         <h1 style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'clamp(40px,5vw,60px)', color:'var(--ink)', lineHeight:.95, letterSpacing:-1.5, marginBottom:32 }}>Privacy Policy</h1>
-        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5, marginBottom:40 }}>LAST UPDATED: JANUARY 2025</div>
+        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5, marginBottom:40 }}>LAST UPDATED: JANUARY 2026</div>
         <div className="article-body">
           <h2>Information We Collect</h2>
           <p>PulseAfrica collects minimal data. When you visit our website, we may collect: anonymous page view statistics, your general geographic region (country-level), browser type and device information for analytics purposes.</p>
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
           <h2>Data Retention</h2>
           <p>We do not store personal user data on our servers. Analytics data is anonymized and retained for 26 months by Google Analytics.</p>
           <h2>Your Rights</h2>
-          <p>You have the right to access, correct, or delete any personal data we hold about you. To exercise these rights, contact us at privacy@pulseafrica.com.</p>
+          <p>You have the right to access, correct, or delete any personal data we hold about you. To exercise these rights, contact us at honoremugisha54@gmail.com.</p>
           <h2>Changes to This Policy</h2>
           <p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated date.</p>
         </div>

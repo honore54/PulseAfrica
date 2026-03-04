@@ -49,9 +49,9 @@ export default function Footer() {
 
           <div>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8.5, letterSpacing:3, color:'var(--ink8)', marginBottom:16, textTransform:'uppercase' }}>Company</div>
-            {['About PulseAfrica','How It Works','Advertise With Us','Contact'].map(t => (
-              <Link key={t} href="/about" style={{ display:'block', fontSize:13, color:'var(--ink5)', marginBottom:9, textDecoration:'none', fontWeight:300 }}>{t}</Link>
-            ))}
+           {[['About PulseAfrica','/about'],['How It Works','/about'],['Advertise With Us','/contact'],['Contact','/contact']].map(([t,h]) => (
+  <Link key={t} href={h} style={{ display:'block', fontSize:13, color:'var(--ink5)', marginBottom:9, textDecoration:'none', fontWeight:300 }}>{t}</Link>
+))}
           </div>
 
           <div>
@@ -63,8 +63,8 @@ export default function Footer() {
         </div>
 
         <div style={{ borderTop:'1px solid var(--lace)', paddingTop:20, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}>© 2025 PULSEAFRICA · AI-GENERATED NEWS & ANALYSIS</span>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}>BUILT WITH CLAUDE AI · NEXT.JS · SUPABASE · VERCEL</span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}>© 2026 PULSEAFRICA · AI-GENERATED NEWS & ANALYSIS</span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}> NEXT.JS · SUPABASE · VERCEL</span>
         </div>
       </div>
     </footer>
