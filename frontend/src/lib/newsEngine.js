@@ -203,7 +203,10 @@ Respond ONLY with a valid JSON object. No markdown fences, no preamble, no text 
   if (json.error) throw new Error(`Groq error: ${json.error.message}`)
   const text = json.choices?.[0]?.message?.content || ''
   if (!text) throw new Error('Groq returned empty text')
-  const clean = text.replace(/```json|```/g, '').trim()
+  const clean = text
+  .replace(/```json|```/g, '')
+  .replace(/[\x00-\x1F\x7F]/g, ' ')
+  .trim()
   const parsed = JSON.parse(clean)
 
   // Fetch matching image — try Unsplash API first, fall back to pool
