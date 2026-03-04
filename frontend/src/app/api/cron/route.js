@@ -17,10 +17,16 @@ export async function GET(request) {
     console.log(`[CRON] Generated ${articles.length} articles`)
 
     const admin = supabaseAdmin()
+    console.log('[DB] Attempting to insert', articles.length, 'articles')
+    console.log('[DB] First article keys:', Object.keys(articles[0] || {}))
+
     const { data, error } = await admin
       .from('articles')
       .insert(articles)
       .select('id, slug, category')
+
+    console.log('[DB] Insert error:', JSON.stringify(error))
+    console.log('[DB] Insert data:', JSON.stringify(data))
 
     if (error) throw error
 
