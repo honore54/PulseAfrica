@@ -3,7 +3,7 @@ export const revalidate = 0
 
 import { getArticles } from '@/lib/supabase'
 
-export const dynamic = 'force-dynamic'
+
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
