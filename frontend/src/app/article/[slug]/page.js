@@ -36,7 +36,7 @@ export default async function ArticlePage({ params, searchParams }) {
   const lang = searchParams?.lang || 'en'
   const slug = params.slug
 
-  const { data: article, error } = await supabase
+  const { data: article, error } = await supabase()
     .from('articles')
     .select('*')
     .eq('slug', slug)
@@ -52,7 +52,7 @@ export default async function ArticlePage({ params, searchParams }) {
 
   let related = []
   try {
-    const { data } = await supabase
+    const { data } = await supabase()
       .from('articles')
       .select(`id, slug, category, image_url, published_at, views, read_time, title_${t}, summary_${t}`)
       .eq('category', article.category)
