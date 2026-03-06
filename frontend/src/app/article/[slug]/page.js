@@ -44,11 +44,9 @@ export default async function ArticlePage({ params, searchParams }) {
 
   if (error || !article) notFound()
 
-  // ── Increment views ──────────────────────────────────────
+  // ── Increment views (atomic — safe for concurrent visitors) ──
   supabase()
-    .from('articles')
-    .update({ views: (article.views || 0) + 1 })
-    .eq('slug', slug)
+    .rpc('increment_views', { article_slug: slug })
     .then(() => {})
     .catch(() => {})
 
