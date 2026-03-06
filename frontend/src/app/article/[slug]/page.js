@@ -44,6 +44,14 @@ export default async function ArticlePage({ params, searchParams }) {
 
   if (error || !article) notFound()
 
+  // ── Increment views ──────────────────────────────────────
+  supabase()
+    .from('articles')
+    .update({ views: (article.views || 0) + 1 })
+    .eq('slug', slug)
+    .then(() => {})
+    .catch(() => {})
+
   const t = lang === 'fr' ? 'fr' : lang === 'rw' ? 'rw' : 'en'
   const title   = article[`title_${t}`]   || article.title_en   || ''
   const summary = article[`summary_${t}`] || article.summary_en || ''
