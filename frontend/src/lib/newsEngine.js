@@ -127,12 +127,12 @@ export async function fetchUnsplashImage(query, category) {
 // ── GNews queries: 70% Africa, 30% World ─────────────────
 // Index 0 & 1 = Africa (70%), Index 2 = World (30%)
 const GNEWS_QUERIES = {
-  politics:      ['Africa election government', 'Africa president minister parliament', 'world leaders summit diplomacy'],
-  sports:        ['Africa football AFCON', 'Africa athletics rugby cricket', 'world cup championship final'],
-  entertainment: ['Africa music concert Afrobeats', 'Nollywood African cinema festival', 'global music film award'],
-  africa:        ['Africa humanitarian climate', 'African Union development', 'Africa infrastructure investment'],
-  technology:    ['Africa fintech startup digital', 'Africa mobile internet innovation', 'global AI technology launch'],
-  business:      ['Africa trade economy GDP', 'Africa investment mining energy', 'global markets economy inflation'],
+  politics:      ['Africa election', 'Africa government', 'UN sanctions Africa diplomacy'],
+  sports:        ['Africa football', 'Africa AFCON', 'FIFA World Cup Africa'],
+  entertainment: ['Africa music Afrobeats', 'Nollywood film Africa', 'Grammy Africa artist'],
+  africa:        ['Africa economy', 'African Union', 'IMF World Bank Africa'],
+  technology:    ['Africa fintech', 'Africa technology startup', 'SpaceX Starlink Africa'],
+  business:      ['Africa investment', 'Africa trade', 'oil gas price Africa impact'],
 }
 
 // ── Image query examples per category ────────────────────
