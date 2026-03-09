@@ -123,41 +123,93 @@ export async function fetchUnsplashImage(query, category) {
   }
 }
 
-// ── Get yesterday's date for NewsAPI ─────────────────────
-function getYesterday() {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return d.toISOString().split('T')[0]
+// ── Real African RSS sources per category ─────────────────
+const RSS_SOURCES = {
+  politics: [
+    'https://www.africanews.com/news/',
+    'https://www.theafricareport.com/sections/politics//',
+    'https://apnews.com/politics',
+  ],
+  sports: [
+    'https://www.africanews.com/sport/',
+    'https://www.timeslive.co.za/sport/',
+    'https://apnews.com/sports',
+  ],
+  entertainment: [
+    'https://www.africanews.com/culture/',
+    'https://www.newtimes.co.rw/entertainment',
+  ],
+  africa: [
+    'https://www.africanews.com/', 
+    'https://apnews.com/',
+    'https://www.topafricanews.com/'
+  ],
+  technology: [
+    'https://apnews.com/technology',
+    'https://www.topafricanews.com/category/development-trends/',
+    'https://www.africanews.com/science-technology/'
+  ],
+  business: [
+    'https://www.theafricareport.com/sections/business/',
+    'https://www.africanews.com/business/',
+    'https://www.timeslive.co.za/news/business/',
+  ],
 }
 
-// ── Fetch latest breaking news via NewsAPI ────────────────
-async function fetchTrendingTopics(category, country) {
-  const key = process.env.NEWS_API_KEY
-  if (!key) return null
-
-  const queries = {
-    politics:      `${country} OR Africa politics government election president minister`,
-    sports:        `${country} OR Africa football soccer athletics sports championship`,
-    entertainment: `${country} OR Africa music Afrobeats film celebrity entertainment`,
-    africa:        `${country} OR Africa development economy infrastructure society`,
-    technology:    `${country} OR Africa technology startup fintech mobile innovation`,
-    business:      `${country} OR Africa business investment trade market economy`,
-  }
-
+// ── Parse a single RSS feed URL ───────────────────────────
+async function fetchRSSFeed(url) {
   try {
-    const res = await fetch(
-      `https://newsapi.org/v2/everything?q=${encodeURIComponent(queries[category] || 'Africa')}&language=en&sortBy=publishedAt&pageSize=8&from=${getYesterday()}`,
-      { headers: { 'X-Api-Key': key } }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    const articles = (data.articles || []).slice(0, 5)
-    if (articles.length === 0) return null
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PulseAfrica/1.0)' },
+      next: { revalidate: 1800 },
+    })
+    if (!res.ok) return []
+    const text = await res.text()
 
-    const headlines = articles
-      .map(a => `• ${a.title} — ${a.description || ''}`.slice(0, 150))
-      .join('\n')
-    return headlines || null
+    const items = []
+    const itemRegex = /<item>([\s\S]*?)<\/item>/gi
+    const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/i
+    const descRegex = /<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/i
+
+    let match
+    while ((match = itemRegex.exec(text)) !== null && items.length < 3) {
+      const itemContent = match[1]
+      const titleMatch = titleRegex.exec(itemContent)
+      const descMatch = descRegex.exec(itemContent)
+      const title = (titleMatch?.[1] || titleMatch?.[2] || '').replace(/<[^>]+>/g, '').trim()
+      const desc = (descMatch?.[1] || descMatch?.[2] || '').replace(/<[^>]+>/g, '').trim()
+      if (title && title.length > 10) {
+        items.push(`• ${title}${desc ? ' — ' + desc.slice(0, 120) : ''}`)
+      }
+    }
+    return items
+  } catch {
+    return []
+  }
+}
+
+// ── Fetch trending topics from real African RSS feeds ─────
+async function fetchTrendingTopics(category, country) {
+  try {
+    const sources = RSS_SOURCES[category] || RSS_SOURCES.africa
+
+    // Fetch all sources in parallel
+    const results = await Promise.allSettled(
+      sources.map(url => fetchRSSFeed(url))
+    )
+
+    const allHeadlines = results
+      .filter(r => r.status === 'fulfilled')
+      .flatMap(r => r.value)
+      .slice(0, 6)
+
+    if (allHeadlines.length === 0) {
+      console.log(`[RSS] No headlines fetched for ${category}, AI will generate freely`)
+      return null
+    }
+
+    console.log(`[RSS] ✓ Fetched ${allHeadlines.length} real headlines for ${category}`)
+    return allHeadlines.join('\n')
   } catch {
     return null
   }
@@ -195,7 +247,7 @@ export async function generateArticle(category) {
   const headlines = await fetchTrendingTopics(category, country)
 
   const headlineCtx = headlines
-    ? `\n\nBREAKING — Latest real news from the past 24 hours (use these as the BASIS for your article, expand with details, quotes and analysis — do NOT copy verbatim):\n${headlines}`
+    ? `\n\nBREAKING — Latest real headlines from trusted African news sources (Africanews, AP News, The Africa Report, TopAfricaNews). Use these as the BASIS for your article. Expand with context, expert quotes and analysis. Do NOT copy verbatim:\n${headlines}`
     : ''
 
   const prompt = `You are PulseAfrica, Africa's premier AI-powered news publication. Generate a compelling, realistic news article for the "${catMeta.label}" category focused on ${country} (or mention ${country2} as a secondary country).
@@ -203,9 +255,9 @@ ${headlineCtx}
 
 STRICT RULES:
 1. The article MUST be about ${country} — not Nigeria
-2. Base your article on the latest breaking news provided above if available
-3. Include specific names of real-sounding officials, concrete statistics, expert quotes
-4. Strong African perspective throughout
+2. If real headlines are provided above, base your article on them — use real facts, real context, real event details
+3. Use accurate real names of leaders, coaches, officials relevant to ${country} — do NOT invent fake names
+4. Include concrete statistics, expert quotes and strong African perspective
 5. Each language version must feel native, NOT like a translation
 6. Return ONLY valid JSON — no markdown, no text outside JSON, no newlines inside string values
 7. For image_query: write a SPECIFIC 4-5 word Unsplash search query that EXACTLY matches the article topic. Example for ${category}: "${IMAGE_QUERY_EXAMPLES[category] || 'african landscape city people'}". It must match the article content — NOT generic food or random objects.
@@ -223,7 +275,7 @@ Return this exact JSON structure:
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2500,
-      temperature: 0.9,
+      temperature: 0.7,
       response_format: { type: 'json_object' }
     })
   })
