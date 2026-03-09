@@ -124,14 +124,15 @@ export async function fetchUnsplashImage(query, category) {
   }
 }
 
-// ── GNews category search queries ────────────────────────
+// ── GNews queries: 70% Africa, 30% World ─────────────────
+// Index 0 & 1 = Africa (70%), Index 2 = World (30%)
 const GNEWS_QUERIES = {
-  politics:      'Africa politics',
-  sports:        'Africa sports',
-  entertainment: 'Africa entertainment',
-  africa:        'Africa news',
-  technology:    'Africa technology',
-  business:      'Africa business',
+  politics:      ['Africa politics', 'Africa government election', 'world politics breaking'],
+  sports:        ['Africa sports', 'Africa football championship', 'world sports latest'],
+  entertainment: ['Africa entertainment', 'Africa music Afrobeats', 'world entertainment news'],
+  africa:        ['Africa news', 'Africa development economy', 'Africa news today'],
+  technology:    ['Africa technology', 'Africa tech startup innovation', 'world technology breaking'],
+  business:      ['Africa business', 'Africa economy investment', 'world business markets'],
 }
 
 // ── Image query examples per category ────────────────────
@@ -152,9 +153,17 @@ async function fetchRealArticle(category) {
   }
 
   try {
-    const q = encodeURIComponent(GNEWS_QUERIES[category] || 'Africa news')
+    // 70% Africa (rand < 0.70 picks index 0 or 1), 30% World (rand >= 0.70 picks index 2)
+    const rand = Math.random()
+    const queries = GNEWS_QUERIES[category] || ['Africa news', 'Africa news', 'world news']
+    const queryIndex = rand < 0.35 ? 0 : rand < 0.70 ? 1 : 2
+    const selectedQuery = queries[queryIndex]
+
+    console.log(`[GNews] Query (${queryIndex < 2 ? 'Africa 🌍' : 'World 🌐'}): "${selectedQuery}"`)
+
+    const q = encodeURIComponent(selectedQuery)
     const res = await fetch(
-      `https://gnews.io/api/v4/search?q=${q}&lang=en&max=10&apikey=${GNEWS_KEY}`,
+      `https://gnews.io/api/v4/search?q=${q}&lang=en&max=10&in=title,description&apikey=${GNEWS_KEY}`,
       { next: { revalidate: 1800 } }
     )
     if (!res.ok) {
@@ -274,9 +283,7 @@ Return this exact JSON:
 
   const parsed = safeParseJSON(text)
 
-  const imageUrl = realArticle?.url
-    ? await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
-    : await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
+  const imageUrl = await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
 
   const slug = slugify(parsed.title_en || category, { lower: true, strict: true }).slice(0, 80)
     + '-' + Date.now().toString(36)
