@@ -156,33 +156,22 @@ const RSS_SOURCES = {
   ],
 }
 
-// ── Parse a single RSS feed URL ───────────────────────────
+// ── Parse a single RSS feed URL via rss2json proxy ────────
 async function fetchRSSFeed(url) {
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PulseAfrica/1.0)' },
+    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=6`
+    const res = await fetch(proxyUrl, {
       next: { revalidate: 1800 },
     })
     if (!res.ok) return []
-    const text = await res.text()
+    const data = await res.json()
+    if (data.status !== 'ok') return []
 
-    const items = []
-    const itemRegex = /<item>([\s\S]*?)<\/item>/gi
-    const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/i
-    const descRegex = /<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/i
-
-    let match
-    while ((match = itemRegex.exec(text)) !== null && items.length < 3) {
-      const itemContent = match[1]
-      const titleMatch = titleRegex.exec(itemContent)
-      const descMatch = descRegex.exec(itemContent)
-      const title = (titleMatch?.[1] || titleMatch?.[2] || '').replace(/<[^>]+>/g, '').trim()
-      const desc = (descMatch?.[1] || descMatch?.[2] || '').replace(/<[^>]+>/g, '').trim()
-      if (title && title.length > 10) {
-        items.push(`• ${title}${desc ? ' — ' + desc.slice(0, 120) : ''}`)
-      }
-    }
-    return items
+    return (data.items || []).slice(0, 3).map(item => {
+      const title = item.title || ''
+      const desc = (item.description || '').replace(/<[^>]+>/g, '').slice(0, 120)
+      return `• ${title}${desc ? ' — ' + desc : ''}`
+    }).filter(item => item.length > 10)
   } catch {
     return []
   }
