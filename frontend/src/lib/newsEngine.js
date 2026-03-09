@@ -1,6 +1,7 @@
 import slugify from 'slugify'
 
 const GROQ_KEY = process.env.GROQ_API_KEY
+const GNEWS_KEY = process.env.GNEWS_API_KEY
 
 // ── Category config ───────────────────────────────────────
 export const CATEGORIES = [
@@ -123,83 +124,63 @@ export async function fetchUnsplashImage(query, category) {
   }
 }
 
-// ── Real African RSS sources per category ─────────────────
-const RSS_SOURCES = {
-  politics: [
-    'https://www.africanews.com/news/',
-    'https://www.theafricareport.com/sections/politics//',
-    'https://apnews.com/politics',
-  ],
-  sports: [
-    'https://www.africanews.com/sport/',
-    'https://www.timeslive.co.za/sport/',
-    'https://apnews.com/sports',
-  ],
-  entertainment: [
-    'https://www.africanews.com/culture/',
-    'https://www.newtimes.co.rw/entertainment',
-  ],
-  africa: [
-    'https://www.africanews.com/', 
-    'https://apnews.com/',
-    'https://www.topafricanews.com/'
-  ],
-  technology: [
-    'https://apnews.com/technology',
-    'https://www.topafricanews.com/category/development-trends/',
-    'https://www.africanews.com/science-technology/'
-  ],
-  business: [
-    'https://www.theafricareport.com/sections/business/',
-    'https://www.africanews.com/business/',
-    'https://www.timeslive.co.za/news/business/',
-  ],
+// ── GNews category search queries ────────────────────────
+const GNEWS_QUERIES = {
+  politics:      'Africa politics',
+  sports:        'Africa sports',
+  entertainment: 'Africa entertainment',
+  africa:        'Africa news',
+  technology:    'Africa technology',
+  business:      'Africa business',
 }
 
-// ── Parse a single RSS feed URL via rss2json proxy ────────
-async function fetchRSSFeed(url) {
-  try {
-    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=6`
-    const res = await fetch(proxyUrl, {
-      next: { revalidate: 1800 },
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    if (data.status !== 'ok') return []
+// ── Image query examples per category ────────────────────
+const IMAGE_QUERY_EXAMPLES = {
+  politics:      'parliament building government officials podium',
+  sports:        'football stadium crowd cheering athletes',
+  entertainment: 'african music concert stage performance',
+  africa:        'african city skyline landscape nature',
+  technology:    'african tech startup office laptop coding',
+  business:      'african business meeting office cityscape',
+}
 
-    return (data.items || []).slice(0, 3).map(item => {
-      const title = item.title || ''
-      const desc = (item.description || '').replace(/<[^>]+>/g, '').slice(0, 120)
-      return `• ${title}${desc ? ' — ' + desc : ''}`
-    }).filter(item => item.length > 10)
-  } catch {
-    return []
+// ── Fetch real article from GNews API ────────────────────
+async function fetchRealArticle(category) {
+  if (!GNEWS_KEY) {
+    console.log('[GNews] No API key found')
+    return null
   }
-}
 
-// ── Fetch trending topics from real African RSS feeds ─────
-async function fetchTrendingTopics(category, country) {
   try {
-    const sources = RSS_SOURCES[category] || RSS_SOURCES.africa
-
-    // Fetch all sources in parallel
-    const results = await Promise.allSettled(
-      sources.map(url => fetchRSSFeed(url))
+    const q = encodeURIComponent(GNEWS_QUERIES[category] || 'Africa news')
+    const res = await fetch(
+      `https://gnews.io/api/v4/search?q=${q}&lang=en&max=10&apikey=${GNEWS_KEY}`,
+      { next: { revalidate: 1800 } }
     )
-
-    const allHeadlines = results
-      .filter(r => r.status === 'fulfilled')
-      .flatMap(r => r.value)
-      .slice(0, 6)
-
-    if (allHeadlines.length === 0) {
-      console.log(`[RSS] No headlines fetched for ${category}, AI will generate freely`)
+    if (!res.ok) {
+      console.log(`[GNews] HTTP error ${res.status} for ${category}`)
+      return null
+    }
+    const data = await res.json()
+    const articles = data.articles || []
+    if (articles.length === 0) {
+      console.log(`[GNews] No articles found for ${category}`)
       return null
     }
 
-    console.log(`[RSS] ✓ Fetched ${allHeadlines.length} real headlines for ${category}`)
-    return allHeadlines.join('\n')
-  } catch {
+    // Pick a random article from top 5
+    const article = articles[Math.floor(Math.random() * Math.min(articles.length, 5))]
+    console.log(`[GNews] ✓ Got real article for ${category}: "${article.title}"`)
+    return {
+      title: article.title || '',
+      description: article.description || '',
+      content: article.content || article.description || '',
+      source: article.source?.name || 'African News',
+      url: article.url || '',
+      publishedAt: article.publishedAt || '',
+    }
+  } catch (err) {
+    console.log(`[GNews] Failed for ${category}:`, err.message)
     return null
   }
 }
@@ -218,41 +199,57 @@ function safeParseJSON(text) {
   return JSON.parse(clean)
 }
 
-// ── Image query examples per category ────────────────────
-const IMAGE_QUERY_EXAMPLES = {
-  politics:      'parliament building government officials podium',
-  sports:        'football stadium crowd cheering athletes',
-  entertainment: 'african music concert stage performance',
-  africa:        'african city skyline landscape nature',
-  technology:    'african tech startup office laptop coding',
-  business:      'african business meeting office cityscape',
-}
-
 // ── Core: Generate one full article with AI ───────────────
 export async function generateArticle(category) {
   const catMeta = CATEGORIES.find(c => c.id === category) || CATEGORIES[0]
-  const country = pickCountry()
-  const country2 = pickCountry()
-  const headlines = await fetchTrendingTopics(category, country)
 
-  const headlineCtx = headlines
-    ? `\n\nBREAKING — Latest real headlines from trusted African news sources (Africanews, AP News, The Africa Report, TopAfricaNews). Use these as the BASIS for your article. Expand with context, expert quotes and analysis. Do NOT copy verbatim:\n${headlines}`
-    : ''
+  // Fetch a real article from GNews
+  const realArticle = await fetchRealArticle(category)
 
-  const prompt = `You are PulseAfrica, Africa's premier AI-powered news publication. Generate a compelling, realistic news article for the "${catMeta.label}" category focused on ${country} (or mention ${country2} as a secondary country).
-${headlineCtx}
+  let prompt
+
+  if (realArticle) {
+    // ── MODE 1: Real article exists — AI only translates & formats ──
+    console.log(`[AI] Using real GNews article for ${category}`)
+    prompt = `You are PulseAfrica, Africa's trilingual news platform. Your job is to reformat and translate the following REAL news article into our publishing format.
+
+REAL ARTICLE FROM ${realArticle.source.toUpperCase()}:
+Title: ${realArticle.title}
+Description: ${realArticle.description}
+Content: ${realArticle.content}
+Published: ${realArticle.publishedAt}
+
+STRICT RULES — THIS IS CRITICAL:
+1. Use ONLY the facts from the real article above — do NOT add, invent or assume any facts
+2. Do NOT invent names, scores, statistics or quotes that are not in the source
+3. If a quote is not in the source, do not make one up — paraphrase instead
+4. Translate faithfully to French and Kinyarwanda — keep all facts identical
+5. The English version should be a professional rewrite of the real article
+6. Return ONLY valid JSON — no markdown, no text outside JSON
+7. For image_query: write a SPECIFIC 4-5 word Unsplash query matching the article topic e.g. "${IMAGE_QUERY_EXAMPLES[category]}"
+
+Return this exact JSON:
+{"title_en":"English headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence English summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Professional English rewrite of the real article 300-400 words. Use ## for 2-3 headings. Only facts from source.","content_fr":"Article français 250-300 mots. Utilise ## pour sous-titres. Mêmes faits que l'anglais.","content_rw":"Ingingo Kinyarwanda 200-250 amagambo. Koresha ## kubara interuro. Ukuri gusa.","tags":["tag1","tag2","tag3","tag4","tag5"],"read_time":4,"location":"City, Country","image_query":"specific 4-5 word query matching article topic","seo_title":"60-char SEO title","seo_desc":"150-char meta description"}`
+
+  } else {
+    // ── MODE 2: No real article — AI generates but stays grounded ──
+    const country = pickCountry()
+    const country2 = pickCountry()
+    console.log(`[AI] No real article found, generating grounded article for ${category} about ${country}`)
+    prompt = `You are PulseAfrica, Africa's premier AI-powered news publication. Generate a realistic news article for the "${catMeta.label}" category focused on ${country} (mention ${country2} as secondary).
 
 STRICT RULES:
-1. The article MUST be about ${country} — not Nigeria
-2. If real headlines are provided above, base your article on them — use real facts, real context, real event details
-3. Use accurate real names of leaders, coaches, officials relevant to ${country} — do NOT invent fake names
-4. Include concrete statistics, expert quotes and strong African perspective
+1. Write about REAL ongoing situations in ${country} that are actually happening in 2026
+2. Use REAL known leaders and officials of ${country} — do NOT invent fake names
+3. Do NOT invent specific scores, exact statistics or direct quotes you are not sure about
+4. Write in a journalistic style — factual, grounded, no sensationalism
 5. Each language version must feel native, NOT like a translation
 6. Return ONLY valid JSON — no markdown, no text outside JSON, no newlines inside string values
-7. For image_query: write a SPECIFIC 4-5 word Unsplash search query that EXACTLY matches the article topic. Example for ${category}: "${IMAGE_QUERY_EXAMPLES[category] || 'african landscape city people'}". It must match the article content — NOT generic food or random objects.
+7. For image_query: write a SPECIFIC 4-5 word Unsplash query e.g. "${IMAGE_QUERY_EXAMPLES[category]}"
 
-Return this exact JSON structure:
-{"title_en":"English headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence English summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Full English article 300-400 words. Use ## for 2-3 headings. Include one direct quote. End with forward-looking paragraph.","content_fr":"Article français 250-300 mots. Utilise ## pour sous-titres.","content_rw":"Ingingo Kinyarwanda 200-250 amagambo. Koresha ## kubara interuro.","tags":["tag1","tag2","tag3","tag4","tag5"],"read_time":4,"location":"City, ${country}","image_query":"specific 4-5 word query matching article topic e.g. african music concert stage","seo_title":"60-char SEO title","seo_desc":"150-char meta description"}`
+Return this exact JSON:
+{"title_en":"English headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence English summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Grounded English article 300-400 words. Use ## for 2-3 headings. Real facts only. End with forward-looking paragraph.","content_fr":"Article français 250-300 mots. Utilise ## pour sous-titres.","content_rw":"Ingingo Kinyarwanda 200-250 amagambo. Koresha ## kubara interuro.","tags":["tag1","tag2","tag3","tag4","tag5"],"read_time":4,"location":"City, ${country}","image_query":"specific 4-5 word query matching article topic","seo_title":"60-char SEO title","seo_desc":"150-char meta description"}`
+  }
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -264,7 +261,7 @@ Return this exact JSON structure:
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2500,
-      temperature: 0.7,
+      temperature: 0.3,
       response_format: { type: 'json_object' }
     })
   })
@@ -277,7 +274,9 @@ Return this exact JSON structure:
 
   const parsed = safeParseJSON(text)
 
-  const imageUrl = await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category] || category, category)
+  const imageUrl = realArticle?.url
+    ? await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
+    : await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
 
   const slug = slugify(parsed.title_en || category, { lower: true, strict: true }).slice(0, 80)
     + '-' + Date.now().toString(36)
@@ -289,7 +288,7 @@ Return this exact JSON structure:
     published_at: new Date().toISOString(),
     views: 0,
     read_time: parsed.read_time || 4,
-    location: parsed.location || `${country}`,
+    location: parsed.location || 'Africa',
     tags: parsed.tags || [],
     seo_title: parsed.seo_title || parsed.title_en,
     seo_desc:  parsed.seo_desc  || parsed.summary_en,
@@ -314,7 +313,7 @@ export async function generateAllCategories() {
       const article = await generateArticle(cat.id)
       results.push(article)
       console.log(`[AI] ✓ ${cat.label}: "${(article.title_en || '').slice(0, 60)}..."`)
-      await new Promise(r => setTimeout(r, 600))
+      await new Promise(r => setTimeout(r, 800))
     } catch (err) {
       console.error(`[AI] ✗ Failed ${cat.id}:`, err.message)
     }
