@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { autoPostArticle } from '@/lib/twitterService'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 300 // Pro plan: 5 min. Free plan: 60s
+export const maxDuration = 300
 
 export async function GET(request) {
   const authHeader = request.headers.get('authorization')
@@ -12,40 +12,48 @@ export async function GET(request) {
   }
 
   try {
-    console.log('[CRON] Starting article generation...')
+    // Step 1 — Generate articles
+    console.log('[CRON] Generating articles...')
     const articles = await generateAllCategories()
-    console.log(`[CRON] Generated ${articles.length} articles`)
 
+    // Step 2 — Save to DB
     const admin = supabaseAdmin()
     const { data, error } = await admin
       .from('articles')
       .insert(articles)
       .select('id, slug, category, title_en, summary_en, location, image_url')
-
     if (error) throw error
-    console.log(`[DB] Inserted ${data.length} articles`)
+    console.log(`[CRON] Saved ${data.length} articles`)
 
-    // ── Post FIRST article to Twitter immediately ──────────
-    // The remaining articles will be picked up by the tweet-poster
-    // cron which runs every 30 minutes and posts unposted articles
-    console.log('[Twitter] Posting first article now...')
-    const firstArticle = { ...articles[0], ...data[0] }
-    const tweetResult = await autoPostArticle(firstArticle)
+    // Step 3 — Post all to Twitter with 15s gap
+    const twitterResults = []
+    for (let i = 0; i < data.length; i++) {
+      const article = { ...articles[i], ...data[i] }
+      console.log(`[Twitter] Posting ${i+1}/6: ${article.title_en?.slice(0, 50)}`)
+      const result = await autoPostArticle(article)
+      twitterResults.push(result)
 
-    // ── Mark first article as tweeted in DB ───────────────
-    if (tweetResult.success) {
-      await admin
-        .from('articles')
-        .update({ tweeted: true, tweet_id: tweetResult.tweetId })
-        .eq('id', data[0].id)
-      console.log(`[Twitter] ✓ First tweet posted: ${tweetResult.tweetId}`)
+      if (result.success) {
+        await admin
+          .from('articles')
+          .update({ tweeted: true, tweet_id: result.tweetId })
+          .eq('id', data[i].id)
+      }
+
+      // 15 second gap between tweets
+      if (i < data.length - 1) {
+        await new Promise(r => setTimeout(r, 15000))
+      }
     }
+
+    const posted = twitterResults.filter(r => r.success).length
+    console.log(`[CRON] ✓ Done! Posted ${posted}/6 tweets`)
 
     return Response.json({
       success: true,
       generated: articles.length,
       articles: data.map(a => ({ id: a.id, slug: a.slug, category: a.category })),
-      twitter: tweetResult.success ? `First tweet posted: ${tweetResult.tweetId}` : 'First tweet failed',
+      twitter: `Posted ${posted}/${articles.length} tweets`,
       timestamp: new Date().toISOString(),
     })
   } catch (err) {
