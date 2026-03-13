@@ -52,10 +52,7 @@ export async function generateMetadata({ params, searchParams }) {
   const image = article.image_url || 'https://pulse-africa.vercel.app/og-default.jpg'
   const keywords = [
     ...(article.tags || []),
-    cat.label,
-    'Africa',
-    'African News',
-    'PulseAfrica',
+    cat.label, 'Africa', 'African News', 'PulseAfrica',
     article.location || '',
   ].filter(Boolean).join(', ')
 
@@ -64,25 +61,11 @@ export async function generateMetadata({ params, searchParams }) {
     description: summary,
     keywords,
     authors: [{ name: 'PulseAfrica' }],
-    creator: 'PulseAfrica',
-    publisher: 'PulseAfrica',
     metadataBase: new URL('https://pulse-africa.vercel.app'),
-    alternates: {
-      canonical: url,
-    },
+    alternates: { canonical: url },
     openGraph: {
-      title,
-      description: summary,
-      url,
-      siteName: 'PulseAfrica',
-      images: [
-        {
-          url: image,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
+      title, description: summary, url, siteName: 'PulseAfrica',
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
       locale: lang === 'fr' ? 'fr_FR' : lang === 'rw' ? 'rw_RW' : 'en_US',
       type: 'article',
       publishedTime: article.published_at,
@@ -93,9 +76,7 @@ export async function generateMetadata({ params, searchParams }) {
       card: 'summary_large_image',
       site: '@PulseAfrica250',
       creator: '@PulseAfrica250',
-      title,
-      description: summary,
-      images: [image],
+      title, description: summary, images: [image],
     },
   }
 }
@@ -123,21 +104,42 @@ export default async function ArticlePage({ params, searchParams }) {
   const content = article[`content_${t}`] || article.content_en || ''
   const cat = CAT_META[article.category] || CAT_META.africa
 
-  let related = []
+  // ── Internal linking: 3 related by tags + 2 from same category ──
+  let relatedByTags = []
+  let relatedByCat = []
+
   try {
+    // 3 articles sharing at least one tag
+    if (article.tags?.length > 0) {
+      const { data } = await supabase()
+        .from('articles')
+        .select(`id, slug, category, image_url, published_at, views, read_time, title_${t}, summary_${t}`)
+        .neq('slug', slug)
+        .overlaps('tags', article.tags)
+        .order('published_at', { ascending: false })
+        .limit(3)
+      relatedByTags = (data || []).map(a => ({
+        ...a, title: a[`title_${t}`] || '', summary: a[`summary_${t}`] || '',
+      }))
+    }
+
+    // 2 from same category (exclude already found)
+    const excludeSlugs = [slug, ...relatedByTags.map(a => a.slug)]
     const { data } = await supabase()
       .from('articles')
       .select(`id, slug, category, image_url, published_at, views, read_time, title_${t}, summary_${t}`)
       .eq('category', article.category)
-      .neq('slug', slug)
+      .not('slug', 'in', `(${excludeSlugs.map(s => `"${s}"`).join(',')})`)
       .order('published_at', { ascending: false })
-      .limit(3)
-    related = (data || []).map(a => ({
-      ...a,
-      title:   a[`title_${t}`]   || '',
-      summary: a[`summary_${t}`] || '',
+      .limit(2)
+    relatedByCat = (data || []).map(a => ({
+      ...a, title: a[`title_${t}`] || '', summary: a[`summary_${t}`] || '',
     }))
   } catch {}
+
+  const allRelated = [...relatedByTags, ...relatedByCat].slice(0, 5)
+  const topRelated = allRelated.slice(0, 3)
+  const bottomRelated = allRelated.slice(3)
 
   return (
     <>
@@ -161,7 +163,7 @@ export default async function ArticlePage({ params, searchParams }) {
           <p style={{ fontSize:18, color:'var(--ink4)', lineHeight:1.7, fontWeight:300, marginBottom:28, fontStyle:'italic', borderLeft:`3px solid ${cat.color}`, paddingLeft:18 }}>{summary}</p>
         )}
 
-        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:32, paddingBottom:20, borderBottom:'1px solid var(--lace)' }}>
+        <div className="article-meta" style={{ display:'flex', alignItems:'center', gap:16, marginBottom:32, paddingBottom:20, borderBottom:'1px solid var(--lace)', flexWrap:'wrap' }}>
           <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5 }}>
             {new Date(article.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}
           </span>
@@ -193,6 +195,32 @@ export default async function ArticlePage({ params, searchParams }) {
         <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
           dangerouslySetInnerHTML={{ __html: renderContent(content) }} />
 
+        {/* ── Mid-article internal links (after content) ── */}
+        {bottomRelated.length > 0 && (
+          <div style={{ margin:'40px 0', padding:'24px', background:'var(--pearl)', borderRadius:16, border:'1px solid var(--lace)' }}>
+            <p style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:16 }}>RELATED READING</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {bottomRelated.map(a => (
+                <Link key={a.id} href={`/article/${a.slug}?lang=${lang}`} style={{
+                  display:'flex', gap:12, textDecoration:'none', color:'inherit',
+                  padding:'12px', borderRadius:10, background:'var(--pure)',
+                  border:'1px solid var(--lace)', transition:'all .2s',
+                }}>
+                  {a.image_url && (
+                    <img src={a.image_url} alt={a.title} style={{ width:72, height:54, objectFit:'cover', borderRadius:8, flexShrink:0 }} />
+                  )}
+                  <div>
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color: CAT_META[a.category]?.color, letterSpacing:1.5, textTransform:'uppercase' }}>
+                      {CAT_META[a.category]?.emoji} {CAT_META[a.category]?.label}
+                    </span>
+                    <p style={{ fontFamily:"'Cormorant',serif", fontSize:15, fontWeight:500, color:'var(--ink)', lineHeight:1.3, marginTop:4 }}>{a.title}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {article.tags?.length > 0 && (
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:40, paddingTop:24, borderTop:'1px solid var(--lace)' }}>
             {article.tags.map(tag => (
@@ -215,15 +243,31 @@ export default async function ArticlePage({ params, searchParams }) {
         <div style={{ marginTop:32 }}><AdBanner size="rectangle" /></div>
       </article>
 
-      {related.length > 0 && (
-        <div style={{ maxWidth:1380, margin:'0 auto', padding:'0 40px 80px', position:'relative', zIndex:10 }}>
+      {/* ── Bottom related articles (3 cards) ── */}
+      {topRelated.length > 0 && (
+        <div className="related-grid" style={{ maxWidth:1380, margin:'0 auto', padding:'0 40px 80px', position:'relative', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:24 }}>
             <div style={{ flex:1, height:1, background:'linear-gradient(90deg,var(--silk),transparent)' }} />
-            <div style={{ fontFamily:"'Cormorant',serif", fontSize:13, fontStyle:'italic', color:'var(--ink6)', letterSpacing:4 }}>More from {cat.label}</div>
-            <div style={{ flex:1, height:1, background:'linear-gradient(90deg,var(--silk),transparent)' }} />
+            <div style={{ fontFamily:"'Cormorant',serif", fontSize:13, fontStyle:'italic', color:'var(--ink6)', letterSpacing:4 }}>
+              You May Also Like
+            </div>
+            <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,var(--silk))' }} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-            {related.map(a => <ArticleCard key={a.id} article={a} lang={lang} />)}
+            {topRelated.map(a => <ArticleCard key={a.id} article={a} lang={lang} />)}
+          </div>
+
+          {/* More from category link */}
+          <div style={{ textAlign:'center', marginTop:32 }}>
+            <Link href={`/category/${article.category}?lang=${lang}`} style={{
+              display:'inline-flex', alignItems:'center', gap:8,
+              padding:'10px 24px', borderRadius:100,
+              border:'1px solid var(--lace)', background:'var(--pearl)',
+              fontFamily:"'Space Mono',monospace", fontSize:10, color:'var(--ink5)',
+              textDecoration:'none', letterSpacing:1.5, transition:'all .2s',
+            }}>
+              MORE {cat.label.toUpperCase()} NEWS →
+            </Link>
           </div>
         </div>
       )}
