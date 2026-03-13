@@ -1,3 +1,4 @@
+import { getAuthorForCategory } from './authors.js'
 import slugify from 'slugify'
 
 const GROQ_KEY = process.env.GROQ_API_KEY
@@ -308,6 +309,7 @@ Return this exact JSON:
     content_en: parsed.content_en || '',
     content_fr: parsed.content_fr || '',
     content_rw: parsed.content_rw || '',
+    author_id: getAuthorForCategory(category).id,
   }
 }
 
