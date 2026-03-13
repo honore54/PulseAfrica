@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { AUTHORS } from '@/lib/authors'
 
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
 export default async function sitemap() {
   const baseUrl = 'https://pulse-africa.vercel.app'
 
