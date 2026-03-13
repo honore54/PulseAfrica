@@ -38,7 +38,6 @@ export default async function AuthorPage({ params }) {
     <>
       <Navbar />
 
-      {/* Author hero */}
       <div style={{ maxWidth:1380, margin:'0 auto', padding:'60px 40px 40px', position:'relative', zIndex:10 }}>
 
         {/* Breadcrumb */}
@@ -77,18 +76,16 @@ export default async function AuthorPage({ params }) {
 
             {/* Stats */}
             <div style={{ display:'flex', gap:24, flexWrap:'wrap' }}>
-              <div>
-                <div style={{ fontFamily:"'Cormorant',serif", fontSize:32, fontWeight:500, color:'var(--ink)' }}>{articleCount}</div>
-                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'var(--ink7)', letterSpacing:2 }}>ARTICLES</div>
-              </div>
-              <div>
-                <div style={{ fontFamily:"'Cormorant',serif", fontSize:32, fontWeight:500, color:'var(--ink)' }}>{categories.length}</div>
-                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'var(--ink7)', letterSpacing:2 }}>CATEGORIES</div>
-              </div>
-              <div>
-                <div style={{ fontFamily:"'Cormorant',serif", fontSize:32, fontWeight:500, color:'var(--ink)' }}>3</div>
-                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'var(--ink7)', letterSpacing:2 }}>LANGUAGES</div>
-              </div>
+              {[
+                [articleCount, 'ARTICLES'],
+                [categories.length || author.specialties.length, 'CATEGORIES'],
+                [3, 'LANGUAGES'],
+              ].map(([n, l]) => (
+                <div key={l}>
+                  <div style={{ fontFamily:"'Cormorant',serif", fontSize:32, fontWeight:500, color:'var(--ink)' }}>{n}</div>
+                  <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'var(--ink7)', letterSpacing:2 }}>{l}</div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -101,7 +98,7 @@ export default async function AuthorPage({ params }) {
                 background:'var(--pearl)', border:'1px solid var(--lace)',
                 fontFamily:"'Space Mono',monospace", fontSize:9,
                 color: CAT_COLORS[s], letterSpacing:1.5, textDecoration:'none',
-                textTransform:'uppercase', transition:'all .2s',
+                textTransform:'uppercase',
               }}>{s}</Link>
             ))}
           </div>
@@ -131,18 +128,15 @@ export default async function AuthorPage({ params }) {
       </div>
 
       {/* All authors strip */}
-      <div style={{ maxWidth:1380, margin:'0 auto', padding:'40px 40px 80px' }}>
+      <div style={{ maxWidth:1380, margin:'0 auto', padding:'0 40px 80px' }}>
         <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:20 }}>OTHER JOURNALISTS</div>
         <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
           {AUTHORS.filter(a => a.id !== author.id).map(a => (
             <Link key={a.id} href={`/author/${a.id}`} style={{
               display:'flex', alignItems:'center', gap:10, padding:'10px 16px',
               borderRadius:12, background:'var(--pure)', border:'1px solid var(--lace)',
-              boxShadow:'var(--sh1)', textDecoration:'none', transition:'all .2s',
-            }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow='var(--sh3)'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow='var(--sh1)'}
-            >
+              boxShadow:'var(--sh1)', textDecoration:'none',
+            }}>
               <div style={{ width:36, height:36, borderRadius:8, background:`linear-gradient(145deg,${a.color},var(--ink2))`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <span style={{ fontFamily:"'Cormorant',serif", fontSize:14, fontWeight:500, color:'#fff' }}>{a.avatar}</span>
               </div>
