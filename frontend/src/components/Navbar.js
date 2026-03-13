@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 const CATS = [
   { id: 'all',           emoji: '🌐', label: 'All News',      href: '/' },
@@ -17,6 +17,7 @@ export default function Navbar({ lang, onLangChange }) {
   const pathname = usePathname()
   const [time, setTime] = useState('')
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -31,10 +32,13 @@ export default function Navbar({ lang, onLangChange }) {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
+  // Close menu on route change
+  useEffect(() => { setMenuOpen(false) }, [pathname])
+
   return (
     <>
       {/* ── Top bar ── */}
-      <div style={{
+      <div className="topbar" style={{
         background: 'var(--pearl)', borderBottom: '1px solid var(--lace)',
         padding: '7px 40px', display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', fontFamily: "'Space Mono',monospace",
@@ -46,7 +50,7 @@ export default function Navbar({ lang, onLangChange }) {
           AI ENGINE LIVE
         </div>
         <span style={{ color:'var(--ink5)' }}>{time}</span>
-        <span>TRACKING 847 SOURCES · 54 COUNTRIES · 3 LANGUAGES</span>
+        <span className="topbar-sources">TRACKING 847 SOURCES · 54 COUNTRIES · 3 LANGUAGES</span>
       </div>
 
       {/* ── Main nav ── */}
@@ -66,7 +70,7 @@ export default function Navbar({ lang, onLangChange }) {
             <div style={{
               width:36, height:36, borderRadius:10, background:'linear-gradient(145deg,var(--ink2),var(--ink))',
               display:'flex', alignItems:'center', justifyContent:'center',
-              boxShadow:'0 4px 12px rgba(12,26,58,.2)', flexShrink:0, overflow:'hidden', position:'relative',
+              boxShadow:'0 4px 12px rgba(12,26,58,.2)', flexShrink:0, overflow:'hidden',
             }}>
               <span style={{ fontFamily:"'Cormorant',serif", fontSize:20, fontWeight:600, color:'#fff' }}>P</span>
             </div>
@@ -76,7 +80,7 @@ export default function Navbar({ lang, onLangChange }) {
             </div>
           </Link>
 
-          {/* Category links */}
+          {/* Desktop category links */}
           <div className="nav-links" style={{ display:'flex', gap:2, flex:1 }}>
             {CATS.map(cat => {
               const active = cat.href === '/' ? pathname === '/' : pathname.startsWith(cat.href)
@@ -94,8 +98,8 @@ export default function Navbar({ lang, onLangChange }) {
             })}
           </div>
 
-          {/* Language switcher */}
-          <div style={{ display:'flex', gap:3, marginLeft:'auto' }}>
+          {/* Desktop language switcher */}
+          <div className="hide-mobile" style={{ display:'flex', gap:3, marginLeft:'auto' }}>
             {[['en','EN'],['fr','FR'],['rw','RW']].map(([code, label]) => (
               <button key={code} onClick={() => onLangChange?.(code)} style={{
                 padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
@@ -107,10 +111,44 @@ export default function Navbar({ lang, onLangChange }) {
               }}>{label}</button>
             ))}
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span style={{ transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
+            <span style={{ opacity: menuOpen ? 0 : 1 }} />
+            <span style={{ transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
+          </button>
+        </div>
+
+        {/* Mobile dropdown menu */}
+        <div className={`mobile-nav ${menuOpen ? 'open' : ''}`}>
+          {CATS.map(cat => {
+            const active = cat.href === '/' ? pathname === '/' : pathname.startsWith(cat.href)
+            return (
+              <Link key={cat.id} href={cat.href} className={active ? 'active' : ''}>
+                {cat.emoji} {cat.label}
+              </Link>
+            )
+          })}
+          {/* Mobile language switcher */}
+          <div style={{ display:'flex', gap:6, padding:'8px 14px', borderTop:'1px solid var(--lace)', marginTop:4 }}>
+            {[['en','EN'],['fr','FR'],['rw','RW']].map(([code, label]) => (
+              <button key={code} onClick={() => { onLangChange?.(code); setMenuOpen(false) }} style={{
+                padding: '6px 14px', borderRadius: 6, cursor: 'pointer',
+                fontFamily: "'Space Mono',monospace", fontSize: 10, fontWeight: 700,
+                background: lang === code ? 'var(--ink)' : 'var(--pearl)',
+                color: lang === code ? '#fff' : 'var(--ink6)',
+                border: `1px solid ${lang === code ? 'var(--ink)' : 'var(--lace)'}`,
+              }}>{label}</button>
+            ))}
+          </div>
         </div>
       </nav>
 
-      {/* ── News Ticker ── */}
       <Ticker />
     </>
   )
