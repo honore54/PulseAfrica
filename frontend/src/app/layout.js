@@ -1,4 +1,5 @@
 import './globals.css'
+import Script from 'next/script'
 
 export const metadata = {
   title: 'PulseAfrica — Africa\'s News, Illuminated',
@@ -24,6 +25,20 @@ export default function RootLayout({ children }) {
         {/* <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossOrigin="anonymous"></script> */}
       </head>
       <body>
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-NSYRBWBDE8"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-NSYRBWBDE8');
+          `}
+        </Script>
+
         {/* Heaven atmospheric lights — live behind everything */}
         <div className="heaven" aria-hidden="true">
           <div className="h-apex" />
