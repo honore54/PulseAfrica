@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import Image from 'next/image'
 
 const CAT_META = {
   politics:      { color:'var(--ruby)',    light:'var(--ruby5)',    border:'rgba(200,18,64,.14)',   label:'Politics',      emoji:'🏛️' },
@@ -9,6 +8,15 @@ const CAT_META = {
   africa:        { color:'var(--copper2)',  light:'var(--copper5)', border:'rgba(196,94,0,.14)',    label:'Africa',        emoji:'🌍' },
   technology:    { color:'var(--sap)',     light:'var(--sap5)',    border:'rgba(26,86,219,.14)',   label:'Technology',    emoji:'💻' },
   business:      { color:'var(--amber)',   light:'var(--amber6)',  border:'rgba(176,121,0,.14)',   label:'Business',      emoji:'📈' },
+}
+
+const CAT_FALLBACK = {
+  politics:      'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&q=80',
+  sports:        'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80',
+  entertainment: 'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=800&q=80',
+  africa:        'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&q=80',
+  technology:    'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80',
+  business:      'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80',
 }
 
 function timeAgo(date) {
@@ -21,6 +29,18 @@ function timeAgo(date) {
 
 function fmtViews(n) {
   return n >= 1000 ? `${(n/1000).toFixed(1)}K` : String(n)
+}
+
+function ArticleImage({ src, alt, category, style }) {
+  const fallback = CAT_FALLBACK[category] || CAT_FALLBACK.africa
+  return (
+    <img
+      src={src || fallback}
+      alt={alt}
+      style={style}
+      onError={e => { e.currentTarget.src = fallback }}
+    />
+  )
 }
 
 export default function ArticleCard({ article, big = false, lang = 'en' }) {
@@ -48,26 +68,21 @@ export default function ArticleCard({ article, big = false, lang = 'en' }) {
           e.currentTarget.style.boxShadow = 'var(--sh2)'
         }}
       >
-        {/* Shine sweep on hover — via CSS animation in globals */}
         <div style={{ position:'relative', height:imgHeight, overflow:'hidden' }}>
-          <img
+          <ArticleImage
             src={article.image_url || article.image}
             alt={article.title}
+            category={article.category}
             style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', filter:'brightness(.97) saturate(1.1)', transition:'transform .5s' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
           />
-          {/* Image dissolves into white */}
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,transparent 25%,rgba(255,255,255,.1) 55%,rgba(255,255,255,.92) 100%)' }} />
         </div>
 
         <div style={{ padding: big ? '22px 24px 24px' : '16px 18px 18px' }}>
-          {/* Category chip */}
           <span className={`chip chip-${article.category}`} style={{ marginBottom:9 }}>
             {cat.emoji} {cat.label.toUpperCase()}
           </span>
 
-          {/* Title */}
           <h2 style={{
             fontFamily: "'Cormorant',serif", fontWeight: 500, color: 'var(--ink)',
             lineHeight: 1.2, marginBottom: 8,
@@ -76,14 +91,12 @@ export default function ArticleCard({ article, big = false, lang = 'en' }) {
             {article.title}
           </h2>
 
-          {/* Summary for big card */}
           {big && article.summary && (
             <p style={{ fontSize:13, color:'var(--ink5)', lineHeight:1.68, fontWeight:300, marginBottom:0 }}>
               {article.summary}
             </p>
           )}
 
-          {/* Footer */}
           <div style={{ display:'flex', alignItems:'center', marginTop:14, paddingTop:12, borderTop:'1px solid rgba(12,26,58,.05)' }}>
             <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)' }}>
               {timeAgo(article.published_at)}
@@ -105,7 +118,6 @@ export default function ArticleCard({ article, big = false, lang = 'en' }) {
   )
 }
 
-// ── Compact article row (for article list) ─────────────────
 export function ArticleRow({ article, lang = 'en' }) {
   const cat = CAT_META[article.category] || CAT_META.africa
   const href = `/article/${article.slug}?lang=${lang}`
@@ -118,9 +130,10 @@ export function ArticleRow({ article, lang = 'en' }) {
       position:'relative',
     }}>
       <div style={{ width:86, height:63, borderRadius:10, overflow:'hidden', flexShrink:0, boxShadow:'var(--sh1)' }}>
-        <img
+        <ArticleImage
           src={article.image_url || article.image}
           alt={article.title}
+          category={article.category}
           style={{ width:'100%', height:'100%', objectFit:'cover', filter:'brightness(.97)' }}
         />
       </div>
@@ -139,7 +152,6 @@ export function ArticleRow({ article, lang = 'en' }) {
   )
 }
 
-// ── Skeleton card ──────────────────────────────────────────
 export function SkeletonCard({ big = false }) {
   return (
     <div style={{ background:'var(--pure)', borderRadius:18, border:'1px solid rgba(12,26,58,.06)', boxShadow:'var(--sh1)', overflow:'hidden', gridRow: big ? 'span 2' : 'auto' }}>
