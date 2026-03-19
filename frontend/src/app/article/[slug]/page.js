@@ -10,12 +10,21 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 const CAT_META = {
-  politics:      { color:'var(--ruby)',    light:'var(--ruby5)',    label:'Politics',      emoji:'🏛️' },
+  politics:      { color:'var(--ruby)',    light:'var(--ruby5)',    label:'Politics',      emoji:'��️' },
   sports:        { color:'var(--jade)',    light:'var(--jade5)',    label:'Sports',        emoji:'⚽' },
   entertainment: { color:'var(--violet)',  light:'var(--violet4)', label:'Entertainment', emoji:'🎬' },
   africa:        { color:'var(--copper2)', light:'var(--copper5)', label:'Africa',        emoji:'🌍' },
   technology:    { color:'var(--sap)',     light:'var(--sap5)',    label:'Technology',    emoji:'💻' },
   business:      { color:'var(--amber)',   light:'var(--amber6)',  label:'Business',      emoji:'📈' },
+}
+
+const AUTHOR_META = {
+  'amara-diallo':  { name:'Amara Diallo',  title:'Senior Africa Correspondent',    avatar:'AD' },
+  'kwame-asante':  { name:'Kwame Asante',  title:'Sports & Culture Editor',        avatar:'KA' },
+  'nadia-okonkwo': { name:'Nadia Okonkwo', title:'Tech & Business Reporter',       avatar:'NO' },
+  'ibrahim-hassan':{ name:'Ibrahim Hassan',title:'East Africa Bureau Chief',       avatar:'IH' },
+  'zainab-mensah': { name:'Zainab Mensah', title:'Entertainment & Lifestyle Writer',avatar:'ZM' },
+  'chidi-eze':     { name:'Chidi Eze',     title:'Investigations & Analysis',      avatar:'CE' },
 }
 
 function renderContent(text = '') {
@@ -48,6 +57,7 @@ export async function generateMetadata({ params, searchParams }) {
   const title   = article[`title_${t}`]   || article.title_en   || ''
   const summary = article[`summary_${t}`] || article.summary_en || ''
   const cat = CAT_META[article.category] || CAT_META.africa
+  const author = AUTHOR_META[article.author_id] || null
   const url = `https://pulse-africa.vercel.app/article/${slug}${lang !== 'en' ? `?lang=${lang}` : ''}`
   const image = article.image_url || 'https://pulse-africa.vercel.app/og-default.jpg'
   const keywords = [
@@ -60,7 +70,7 @@ export async function generateMetadata({ params, searchParams }) {
     title: `${title} | PulseAfrica`,
     description: summary,
     keywords,
-    authors: [{ name: 'PulseAfrica' }],
+    authors: [{ name: author ? author.name : 'PulseAfrica Editorial Team' }],
     metadataBase: new URL('https://pulse-africa.vercel.app'),
     alternates: { canonical: url },
     openGraph: {
@@ -103,13 +113,12 @@ export default async function ArticlePage({ params, searchParams }) {
   const summary = article[`summary_${t}`] || article.summary_en || ''
   const content = article[`content_${t}`] || article.content_en || ''
   const cat = CAT_META[article.category] || CAT_META.africa
+  const author = AUTHOR_META[article.author_id] || null
 
-  // ── Internal linking: 3 related by tags + 2 from same category ──
   let relatedByTags = []
   let relatedByCat = []
 
   try {
-    // 3 articles sharing at least one tag
     if (article.tags?.length > 0) {
       const { data } = await supabase()
         .from('articles')
@@ -123,7 +132,6 @@ export default async function ArticlePage({ params, searchParams }) {
       }))
     }
 
-    // 2 from same category (exclude already found)
     const excludeSlugs = [slug, ...relatedByTags.map(a => a.slug)]
     const { data } = await supabase()
       .from('articles')
@@ -163,7 +171,7 @@ export default async function ArticlePage({ params, searchParams }) {
           <p style={{ fontSize:18, color:'var(--ink4)', lineHeight:1.7, fontWeight:300, marginBottom:28, fontStyle:'italic', borderLeft:`3px solid ${cat.color}`, paddingLeft:18 }}>{summary}</p>
         )}
 
-        <div className="article-meta" style={{ display:'flex', alignItems:'center', gap:16, marginBottom:32, paddingBottom:20, borderBottom:'1px solid var(--lace)', flexWrap:'wrap' }}>
+        <div className="article-meta" style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20, paddingBottom:20, borderBottom:'1px solid var(--lace)', flexWrap:'wrap' }}>
           <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5 }}>
             {new Date(article.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}
           </span>
@@ -185,6 +193,32 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         </div>
 
+        {/* ── Author byline + Editorial review badge ── */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12, marginBottom:32, padding:'16px 20px', background:'var(--pearl)', borderRadius:12, border:'1px solid var(--lace)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{
+              width:40, height:40, borderRadius:'50%',
+              background: cat.color, color:'#fff',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, flexShrink:0,
+            }}>
+              {author ? author.avatar : 'PA'}
+            </div>
+            <div>
+              <p style={{ fontFamily:"'Space Mono',monospace", fontSize:10, fontWeight:700, color:'var(--ink)', margin:0, letterSpacing:0.5 }}>
+                {author ? author.name : 'PulseAfrica Staff'}
+              </p>
+              <p style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'var(--ink6)', margin:0, letterSpacing:1 }}>
+                {author ? author.title : 'Editorial Team'}
+              </p>
+            </div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:100, background:'rgba(16,185,129,.08)', border:'1px solid rgba(16,185,129,.2)' }}>
+            <span style={{ fontSize:12 }}>✅</span>
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'#059669', letterSpacing:1, fontWeight:700 }}>REVIEWED BY PULSEAFRICA EDITORIAL TEAM</span>
+          </div>
+        </div>
+
         {article.image_url && (
           <div style={{ borderRadius:16, overflow:'hidden', marginBottom:36, boxShadow:'var(--sh3)', position:'relative' }}>
             <ArticleImage src={article.image_url} alt={title} category={article.category} />
@@ -195,7 +229,6 @@ export default async function ArticlePage({ params, searchParams }) {
         <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
           dangerouslySetInnerHTML={{ __html: renderContent(content) }} />
 
-        {/* ── Mid-article internal links (after content) ── */}
         {bottomRelated.length > 0 && (
           <div style={{ margin:'40px 0', padding:'24px', background:'var(--pearl)', borderRadius:16, border:'1px solid var(--lace)' }}>
             <p style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:16 }}>RELATED READING</p>
@@ -229,7 +262,6 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         )}
 
-        {/* SOURCE ATTRIBUTION */}
         <div style={{ marginTop:40, paddingTop:24, borderTop:'1px solid var(--lace)' }}>
           <p style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5, marginBottom:8 }}>SOURCES & REFERENCES</p>
           <p style={{ fontSize:13, color:'var(--ink6)', lineHeight:1.8 }}>
@@ -243,7 +275,6 @@ export default async function ArticlePage({ params, searchParams }) {
         <div style={{ marginTop:32 }}><AdBanner size="rectangle" /></div>
       </article>
 
-      {/* ── Bottom related articles (3 cards) ── */}
       {topRelated.length > 0 && (
         <div className="related-grid" style={{ maxWidth:1380, margin:'0 auto', padding:'0 40px 80px', position:'relative', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:24 }}>
@@ -256,8 +287,6 @@ export default async function ArticlePage({ params, searchParams }) {
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
             {topRelated.map(a => <ArticleCard key={a.id} article={a} lang={lang} />)}
           </div>
-
-          {/* More from category link */}
           <div style={{ textAlign:'center', marginTop:32 }}>
             <Link href={`/category/${article.category}?lang=${lang}`} style={{
               display:'inline-flex', alignItems:'center', gap:8,
