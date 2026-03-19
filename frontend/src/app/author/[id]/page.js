@@ -62,7 +62,7 @@ export default async function AuthorPage({ params }) {
           {/* Info */}
           <div style={{ flex:1, minWidth:280 }}>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color: author.color, letterSpacing:2.5, marginBottom:8, textTransform:'uppercase' }}>
-              AI JOURNALIST · PULSEAFRICA
+              CORRESPONDENT · PULSEAFRICA
             </div>
             <h1 style={{ fontFamily:"'Cormorant',serif", fontSize:'clamp(36px,5vw,56px)', fontWeight:400, color:'var(--ink)', lineHeight:1, marginBottom:8 }}>
               {author.name}

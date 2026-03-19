@@ -47,7 +47,7 @@ export default function Navbar({ lang, onLangChange }) {
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:7, background:'var(--jade5)', border:'1px solid var(--jade4)', padding:'3px 10px', borderRadius:'100px', color:'var(--jade)', fontSize:9 }}>
           <span style={{ width:5, height:5, borderRadius:'50%', background:'var(--jade2)', boxShadow:'0 0 8px var(--jade3)', animation:'pulse 2s infinite', display:'inline-block' }} />
-          AI ENGINE LIVE
+          LIVE COVERAGE
         </div>
         <span style={{ color:'var(--ink5)' }}>{time}</span>
         <span className="topbar-sources">TRACKING 847 SOURCES · 54 COUNTRIES · 3 LANGUAGES</span>
@@ -76,7 +76,7 @@ export default function Navbar({ lang, onLangChange }) {
             </div>
             <div>
               <div style={{ fontFamily:"'Cormorant',serif", fontSize:22, fontWeight:500, color:'var(--ink)', letterSpacing:.5, lineHeight:1 }}>PulseAfrica</div>
-              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:7, color:'var(--ink7)', letterSpacing:2.5, marginTop:2 }}>AI NEWS NETWORK</div>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:7, color:'var(--ink7)', letterSpacing:2.5, marginTop:2 }}>AFRICA NEWS</div>
             </div>
           </Link>
 

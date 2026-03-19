@@ -4,11 +4,11 @@ import Script from 'next/script'
 
 export const metadata = {
   title: 'PulseAfrica — Africa\'s News, Illuminated',
-  description: 'AI-powered news tracking 54 African nations 24/7. Deep analysis published in English, Français and Ikinyarwanda.',
-  keywords: 'Africa news, African politics, Africa sports, Africa technology, AI news',
+  description: 'Independent news covering 54 African nations 24/7. Deep analysis published in English, Français and Ikinyarwanda.',
+  keywords: 'Africa news, African politics, Africa sports, Africa technology, African business',
   openGraph: {
     title: 'PulseAfrica — Africa\'s News, Illuminated',
-    description: 'AI-powered African news in 3 languages, updated every 6 hours.',
+    description: 'Independent African news in 3 languages, updated every 6 hours.',
     type: 'website',
     locale: 'en_US',
   },
