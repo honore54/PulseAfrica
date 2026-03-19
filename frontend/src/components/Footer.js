@@ -17,9 +17,7 @@ export default function Footer() {
       background: 'var(--pearl)', borderTop: '1px solid var(--lace)',
       position: 'relative', overflow: 'hidden',
     }}>
-      {/* Soft light from above */}
       <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:'120%', height:200, background:'radial-gradient(ellipse at 50% 0%,rgba(200,220,255,.22) 0%,transparent 70%)', pointerEvents:'none' }} />
-      {/* Gold rule */}
       <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg,transparent 5%,var(--amber4) 35%,var(--amber3) 50%,var(--amber4) 65%,transparent 95%)' }} />
 
       <div style={{ maxWidth:1380, margin:'0 auto', position:'relative', zIndex:1 }}>
@@ -28,10 +26,10 @@ export default function Footer() {
           <div>
             <div style={{ fontFamily:"'Cormorant',serif", fontSize:32, fontWeight:400, color:'var(--ink)', letterSpacing:.5, marginBottom:12 }}>PulseAfrica</div>
             <p style={{ fontSize:13, lineHeight:1.78, color:'var(--ink5)', fontWeight:300, marginBottom:16 }}>
-              AI-powered news tracking 54 African nations 24/7. Deep analysis published automatically every 6 hours in English, Français and Ikinyarwanda.
+              Independent news covering 54 African nations 24/7. Deep analysis and reporting published in English, Français and Ikinyarwanda.
             </p>
             <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-              {['🇬🇧 English','🇫🇷 Français','🇷🇼 Kinyarwanda'].map(l => (
+              {['🇬�� English','🇫🇷 Français','🇷🇼 Kinyarwanda'].map(l => (
                 <span key={l} style={{ padding:'4px 10px', borderRadius:6, background:'var(--pure)', border:'1px solid var(--lace)', fontFamily:"'Space Mono',monospace", fontSize:8.5, fontWeight:700, letterSpacing:1, color:'var(--ink6)' }}>{l}</span>
               ))}
             </div>
@@ -49,22 +47,31 @@ export default function Footer() {
 
           <div>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8.5, letterSpacing:3, color:'var(--ink8)', marginBottom:16, textTransform:'uppercase' }}>Company</div>
-           {[['About PulseAfrica','/about'],['How It Works','/about'],['Advertise With Us','/contact'],['Contact','/contact']].map(([t,h]) => (
-  <Link key={t} href={h} style={{ display:'block', fontSize:13, color:'var(--ink5)', marginBottom:9, textDecoration:'none', fontWeight:300 }}>{t}</Link>
-))}
+            {[
+              ['About PulseAfrica','/about'],
+              ['Our Editorial Team','/about'],
+              ['Advertise With Us','/contact'],
+              ['Contact Us','/contact'],
+            ].map(([t,h]) => (
+              <Link key={t} href={h} style={{ display:'block', fontSize:13, color:'var(--ink5)', marginBottom:9, textDecoration:'none', fontWeight:300 }}>{t}</Link>
+            ))}
           </div>
 
           <div>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8.5, letterSpacing:3, color:'var(--ink8)', marginBottom:16, textTransform:'uppercase' }}>Legal</div>
-            {[['Privacy Policy','/privacy'],['Terms of Service','/about'],['Cookie Policy','/privacy']].map(([t,h]) => (
+            {[
+              ['Privacy Policy','/privacy'],
+              ['Terms of Service','/terms'],
+              ['Cookie Policy','/privacy'],
+            ].map(([t,h]) => (
               <Link key={t} href={h} style={{ display:'block', fontSize:13, color:'var(--ink5)', marginBottom:9, textDecoration:'none', fontWeight:300 }}>{t}</Link>
             ))}
           </div>
         </div>
 
         <div style={{ borderTop:'1px solid var(--lace)', paddingTop:20, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}>© 2026 PULSEAFRICA · AI-GENERATED NEWS & ANALYSIS</span>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}> NEXT.JS · SUPABASE · VERCEL</span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}>© 2026 PULSEAFRICA · ALL RIGHTS RESERVED</span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1 }}>INDEPENDENT AFRICAN NEWS</span>
         </div>
       </div>
     </footer>
