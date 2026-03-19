@@ -13,7 +13,7 @@ const CAT_META = {
   sports:        { color:'var(--jade)',    light:'var(--jade5)',    label:'Sports',        emoji:'⚽', desc:'Football, athletics and everything that moves Africa.' },
   entertainment: { color:'var(--violet)',  light:'var(--violet4)', label:'Entertainment', emoji:'🎬', desc:'Music, film, culture and the arts shaping the continent.' },
   africa:        { color:'var(--copper2)', light:'var(--copper5)', label:'Africa News',   emoji:'🌍', desc:'Pan-continental stories, development and society.' },
-  technology:    { color:'var(--sap)',     light:'var(--sap5)',    label:'Technology',    emoji:'💻', desc:'Startups, fintech, AI and Africa\'s digital revolution.' },
+  technology:    { color:'var(--sap)',     light:'var(--sap5)',    label:'Technology',    emoji:'💻', desc:'Startups, fintech, innovation and Africa\'s digital revolution.' },
   business:      { color:'var(--amber)',   light:'var(--amber6)',  label:'Business',      emoji:'📈', desc:'Markets, investment, trade and economic growth.' },
 }
 

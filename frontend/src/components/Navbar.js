@@ -164,7 +164,7 @@ function Ticker() {
   const items = articles.length ? articles : [
     { category:'politics', title:'African Union seals historic 54-nation climate pact' },
     { category:'sports',   title:'Rwanda qualifies for AFCON 2025 after dramatic victory' },
-    { category:'technology', title:'Kigali launches Africa\'s first AI-powered transit network' },
+    { category:'technology', title:'Kigali launches Africa\'s first smart transit network' },
   ]
   const doubled = [...items, ...items]
 
