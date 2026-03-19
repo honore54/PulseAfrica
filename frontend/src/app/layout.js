@@ -1,4 +1,5 @@
 import './globals.css'
+import CookieBanner from '@/components/CookieBanner'
 import Script from 'next/script'
 
 export const metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({ children }) {
           <div className="h-jade" />
         </div>
         {children}
+        <CookieBanner />
       </body>
     </html>
   )
