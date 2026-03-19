@@ -51,7 +51,6 @@ function fmtViews(n) {
   return n >= 1000 ? `${(n/1000).toFixed(1)}K` : String(n || 0)
 }
 
-// ── Most Read Today Widget ──────────────────────────────
 function MostReadToday({ lang }) {
   const [mostRead, setMostRead] = useState([])
   const [loading, setLoading] = useState(true)
@@ -97,28 +96,21 @@ function MostReadToday({ lang }) {
             onMouseEnter={e => e.currentTarget.style.background='var(--mist)'}
             onMouseLeave={e => e.currentTarget.style.background='transparent'}
           >
-            {/* Rank number */}
             <div style={{
               fontFamily:"'Cormorant',serif", fontSize:28, fontWeight:300, fontStyle:'italic',
               color: i === 0 ? 'var(--amber3)' : i === 1 ? 'var(--ink8)' : 'var(--silk)',
               lineHeight:1, flexShrink:0, width:22, paddingTop:2,
             }}>{i+1}</div>
-
-            {/* Thumbnail */}
             {a.image_url && (
               <img src={a.image_url} alt={a.title_en} style={{ width:52, height:40, objectFit:'cover', borderRadius:6, flexShrink:0 }} />
             )}
-
             <div style={{ flex:1, minWidth:0 }}>
-              {/* Category */}
               <div style={{ fontFamily:"'Space Mono',monospace", fontSize:7.5, fontWeight:700, letterSpacing:1.5, color: CAT_COLORS[a.category], textTransform:'uppercase', marginBottom:3 }}>
                 {CATS.find(c=>c.id===a.category)?.emoji} {a.category}
               </div>
-              {/* Title */}
               <div style={{ fontFamily:"'Cormorant',serif", fontSize:13.5, fontWeight:500, color:'var(--ink2)', lineHeight:1.3, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
                 {a.title_en}
               </div>
-              {/* Views */}
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 <span style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:'var(--ink8)' }}>
                   👁 {fmtViews(a.views)} views
@@ -191,7 +183,7 @@ export default function HomePage() {
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:28, animation:'fadeUp .7s ease both' }}>
               <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'5px 13px', borderRadius:100, background:'var(--pure)', border:'1px solid var(--lace)', boxShadow:'var(--sh1)', fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink5)', letterSpacing:2 }}>
                 <span style={{ width:6, height:6, borderRadius:'50%', background:'var(--jade2)', boxShadow:'0 0 8px var(--jade3)', animation:'pulse 2s infinite', display:'inline-block' }} />
-                AI-CURATED · EVERY 6 HOURS
+                LIVE · UPDATED EVERY 6 HOURS
               </div>
               <div style={{ flex:1, height:1, background:'linear-gradient(90deg,var(--lace),transparent)' }} />
               <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'5px 13px', borderRadius:100, background:'var(--amber6)', border:'1px solid rgba(176,121,0,.2)', fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--amber)', letterSpacing:2 }}>
@@ -209,7 +201,7 @@ export default function HomePage() {
             </h1>
 
             <p style={{ fontSize:16, color:'var(--ink5)', lineHeight:1.78, fontWeight:300, maxWidth:480, marginBottom:44, animation:'fadeUp .75s .2s ease both' }}>
-              Autonomous AI tracks 847 sources across 54 nations — writing deep-insight articles published in English, Français and Ikinyarwanda. Every six hours, without pause.
+              Independent news covering 54 African nations — published in English, Français and Ikinyarwanda. Our editorial team tracks hundreds of sources across the continent every day.
             </p>
 
             <div style={{ display:'flex', gap:0, animation:'fadeUp .75s .3s ease both' }}>
@@ -284,7 +276,7 @@ export default function HomePage() {
             <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink8)', letterSpacing:1.5 }}>{articles.length} ARTICLES</span>
           </div>
           <div style={{ display:'flex', gap:6 }}>
-            {[['en','🇬🇧 English'],['fr','🇫🇷 Français'],['rw','��🇼 Kinyarwanda']].map(([code,label]) => (
+            {[['en','🇬🇧 English'],['fr','🇫🇷 Français'],['rw','🇷🇼 Kinyarwanda']].map(([code,label]) => (
               <button key={code} onClick={() => handleLangChange(code)} style={{
                 padding:'7px 16px', borderRadius:8, fontFamily:"'Space Mono',monospace",
                 fontSize:10, fontWeight:700, letterSpacing:1.5, cursor:'pointer',
@@ -354,7 +346,6 @@ export default function HomePage() {
 
         <div className="two-col" style={{ display:'grid', gridTemplateColumns:'1fr 332px', gap:32 }}>
 
-          {/* Article list */}
           <div>
             {loading
               ? Array(6).fill(0).map((_,i) => (
@@ -375,23 +366,22 @@ export default function HomePage() {
           {/* Sidebar */}
           <div className="sidebar" style={{ display:'flex', flexDirection:'column', gap:18 }}>
 
-            {/* ── MOST READ TODAY ── */}
             <MostReadToday lang={lang} />
 
-            {/* AI Engine Status */}
+            {/* Publishing Status */}
             <div style={{ background:'var(--pure)', borderRadius:16, border:'1px solid rgba(12,26,58,.06)', boxShadow:'var(--sh2)', overflow:'hidden' }}>
               <div style={{ padding:'14px 18px 12px', borderBottom:'1px solid rgba(12,26,58,.05)', display:'flex', alignItems:'center', gap:8 }}>
                 <span style={{ width:6, height:6, borderRadius:'50%', background:'var(--jade2)', boxShadow:'0 0 8px var(--jade3)', animation:'pulse 2s infinite', display:'inline-block' }} />
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, letterSpacing:3, color:'var(--ink7)', textTransform:'uppercase' }}>AI Engine Status</span>
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, letterSpacing:3, color:'var(--ink7)', textTransform:'uppercase' }}>Publishing Status</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:9, padding:'9px 18px 10px', background:'linear-gradient(135deg,var(--jade5),var(--pure))', borderBottom:'1px solid rgba(10,143,108,.06)' }}>
                 <span style={{ width:7, height:7, borderRadius:'50%', background:'var(--jade2)', boxShadow:'0 0 8px var(--jade3)', animation:'pulse 1.8s infinite', display:'inline-block', flexShrink:0 }} />
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink5)' }}>NEXT CYCLE IN {countdown}</span>
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink5)' }}>NEXT UPDATE IN {countdown}</span>
               </div>
               {[
-                ['Sources Tracked','847','linear-gradient(90deg,var(--sap2),var(--sap3))', barAnimate?85:0],
-                ['Articles Generated', articles.length, 'linear-gradient(90deg,var(--jade),var(--jade2))', barAnimate?Math.min((articles.length/20)*100,100):0],
-                ['Avg SEO Score','9.4/10','linear-gradient(90deg,var(--amber),var(--amber3))', barAnimate?94:0],
+                ['Sources Monitored','847+','linear-gradient(90deg,var(--sap2),var(--sap3))', barAnimate?85:0],
+                ['Articles Published', articles.length, 'linear-gradient(90deg,var(--jade),var(--jade2))', barAnimate?Math.min((articles.length/20)*100,100):0],
+                ['Editorial Score','9.4/10','linear-gradient(90deg,var(--amber),var(--amber3))', barAnimate?94:0],
                 ['Languages Active','EN·FR·RW','linear-gradient(90deg,var(--ruby2),var(--ruby3))', barAnimate?100:0],
               ].map(([name,val,grad,w]) => (
                 <div key={name} style={{ padding:'10px 18px', borderBottom:'1px solid rgba(12,26,58,.04)' }}>
