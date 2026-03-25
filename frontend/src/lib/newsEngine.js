@@ -14,64 +14,21 @@ export const CATEGORIES = [
 ]
 
 const AFRICAN_COUNTRIES = [
-  'Rwanda', 'Kenya', 'Ghana', 'Ethiopia', 'South Africa',
-  'Senegal', 'Tanzania', 'Egypt', 'Morocco', 'Côte d\'Ivoire',
-  'Uganda', 'Cameroon', 'Zimbabwe', 'Mozambique', 'Angola',
-  'Zambia', 'Mali', 'Burkina Faso', 'Niger', 'Chad',
-  'DRC', 'Somalia', 'Sudan', 'Tunisia', 'Algeria',
-  'Botswana', 'Namibia', 'Madagascar', 'Malawi', 'Togo',
+  'Rwanda','Kenya','Ghana','Ethiopia','South Africa','Senegal','Tanzania',
+  'Egypt','Morocco','Côte d\'Ivoire','Uganda','Cameroon','Zimbabwe',
+  'Mozambique','Angola','Zambia','Mali','DRC','Somalia','Tunisia',
+  'Algeria','Botswana','Namibia','Madagascar','Togo',
 ]
 
 function pickCountry() {
   return AFRICAN_COUNTRIES[Math.floor(Math.random() * AFRICAN_COUNTRIES.length)]
 }
 
-// ── African sports stars pool ─────────────────────────────
 const AFRICAN_SPORTS_STARS = [
-  'Victor Osimhen', 'Mohamed Salah', 'Sadio Mané', 'Riyad Mahrez',
-  'Achraf Hakimi', 'Edouard Mendy', 'Kalidou Koulibaly', 'Thomas Partey',
-  'André Onana', 'Nicolas Pépé', 'Hakim Ziyech', 'Wilfried Zaha',
-  'Serge Gnabry', 'Chancel Mbemba', 'Naby Keïta', 'Idrissa Gueye',
-  'Youssef En-Nesyri', 'Sofyan Amrabat', 'Sébastien Haller', 'Simon Adingra',
-]
-
-// ── African entertainment stars pool ─────────────────────
-const AFRICAN_ENTERTAINMENT_STARS = [
-  'Burna Boy', 'Wizkid', 'Davido', 'Tiwa Savage', 'Tems',
-  'Rema', 'Asake', 'Ckay', 'Fireboy DML', 'Ayra Starr',
-  'Diamond Platnumz', 'Harmonize', 'Zuchu', 'Sauti Sol',
-  'Stonebwoy', 'Sarkodie', 'Black Sherif', 'Amapiano artists',
-  'Master KG', 'Focalistic', 'Kabza De Small', 'DJ Maphorisa',
-  'Nollywood', 'Genevieve Nnaji', 'Omotola Jalade', 'RMD',
-  'Funke Akindele', 'Tobi Bakre', 'Ini Edo',
-]
-
-// ── Sports topics for variety ─────────────────────────────
-const SPORTS_TOPICS = [
-  { topic: 'transfer', query: 'African footballer transfer Premier League 2026' },
-  { topic: 'afcon', query: 'AFCON Africa Cup of Nations 2026 qualification' },
-  { topic: 'player_form', query: 'African player performance Champions League 2026' },
-  { topic: 'world_cup', query: 'Africa 2026 FIFA World Cup squad preparation' },
-  { topic: 'basketball', query: 'Africa Basketball League BAL 2026' },
-  { topic: 'athletics', query: 'African athletics track field world record 2026' },
-  { topic: 'boxing', query: 'African boxing champion title fight 2026' },
-  { topic: 'rugby', query: 'Africa rugby union tournament 2026' },
-  { topic: 'local_league', query: 'CAF Champions League African club football 2026' },
-  { topic: 'injury_return', query: 'African footballer injury return 2026' },
-]
-
-// ── Entertainment topics for variety ─────────────────────
-const ENTERTAINMENT_TOPICS = [
-  { topic: 'new_album', query: 'African artist new album release 2026' },
-  { topic: 'afrobeats', query: 'Afrobeats trending song chart 2026' },
-  { topic: 'nollywood', query: 'Nollywood movie release box office 2026' },
-  { topic: 'amapiano', query: 'Amapiano music South Africa trending 2026' },
-  { topic: 'grammy', query: 'African artist Grammy Award nomination 2026' },
-  { topic: 'concert', query: 'African music concert tour 2026' },
-  { topic: 'collabo', query: 'African artist collaboration international 2026' },
-  { topic: 'award_show', query: 'Africa Music Awards ceremony 2026' },
-  { topic: 'streaming', query: 'African music Spotify Apple Music charts 2026' },
-  { topic: 'film_festival', query: 'African film festival award cinema 2026' },
+  'Victor Osimhen','Mohamed Salah','Sadio Mané','Riyad Mahrez',
+  'Achraf Hakimi','Edouard Mendy','Kalidou Koulibaly','Thomas Partey',
+  'André Onana','Hakim Ziyech','Wilfried Zaha','Serge Gnabry',
+  'Youssef En-Nesyri','Sofyan Amrabat','Sébastien Haller','Simon Adingra',
 ]
 
 const IMAGE_POOLS = {
@@ -136,14 +93,53 @@ export async function fetchUnsplashImage(query, category) {
   }
 }
 
+// ── GNews queries ─────────────────────────────────────────
 const GNEWS_QUERIES = {
-  politics:      ['Africa election government 2026', 'African Union summit 2026', 'UN Africa diplomacy sanctions 2026'],
-  africa:        ['Africa economy development 2026', 'African Union policy 2026', 'IMF World Bank Africa 2026'],
-  technology:    ['Africa fintech startup 2026', 'Africa technology innovation 2026', 'SpaceX Starlink Africa 2026'],
-  business:      ['Africa investment trade 2026', 'Africa economy GDP growth 2026', 'oil gas price Africa 2026'],
-  sports:        [], // handled separately
-  entertainment: [], // handled separately
+  politics:      ['Africa election government 2026','African Union summit 2026','UN Africa diplomacy 2026'],
+  africa:        ['Africa economy development 2026','African Union policy 2026','IMF World Bank Africa 2026'],
+  technology:    ['Africa fintech startup 2026','Africa technology innovation 2026','Africa mobile internet 2026'],
+  business:      ['Africa investment trade 2026','Africa economy GDP 2026','Africa business market 2026'],
 }
+
+// ── Sports GNews queries — rotating pool ─────────────────
+const SPORTS_GNEWS_QUERIES = [
+  'African footballer transfer 2026',
+  'AFCON Africa Cup Nations 2026',
+  'African player Premier League 2026',
+  'CAF Champions League 2026',
+  'Africa FIFA World Cup 2026',
+  'Basketball Africa League BAL 2026',
+  'African athletics world record 2026',
+  'African boxer champion title 2026',
+  'Mohamed Salah 2026',
+  'Victor Osimhen 2026',
+  'Achraf Hakimi 2026',
+  'Africa rugby tournament 2026',
+]
+
+// ── Entertainment GNews queries — REAL sources only ───────
+const ENTERTAINMENT_GNEWS_QUERIES = [
+  'Burna Boy 2026',
+  'Wizkid 2026',
+  'Davido 2026',
+  'Tems music 2026',
+  'Afrobeats music 2026',
+  'Nollywood film 2026',
+  'African music award 2026',
+  'Amapiano 2026',
+  'Rema music 2026',
+  'Asake music 2026',
+  'African Grammy nomination 2026',
+  'BET Awards Africa 2026',
+  'African Netflix series 2026',
+  'Stonebwoy music 2026',
+  'Sarkodie 2026',
+  'Diamond Platnumz 2026',
+  'African music tour concert 2026',
+  'Afrobeats chart Billboard 2026',
+  'Nollywood Netflix movie 2026',
+  'African film festival award 2026',
+]
 
 const IMAGE_QUERY_EXAMPLES = {
   politics:      'parliament government officials podium Africa',
@@ -154,49 +150,57 @@ const IMAGE_QUERY_EXAMPLES = {
   business:      'african business meeting office cityscape',
 }
 
+// ── Fetch real article — tries multiple queries until found ─
 async function fetchRealArticle(category) {
   if (!GNEWS_KEY) return null
 
   try {
-    let selectedQuery
+    let queries = []
 
     if (category === 'sports') {
-      // Pick random sports topic for variety
-      const topic = SPORTS_TOPICS[Math.floor(Math.random() * SPORTS_TOPICS.length)]
-      selectedQuery = topic.query
-      console.log(`[GNews] Sports topic: "${topic.topic}" — "${selectedQuery}"`)
+      // Shuffle and try multiple sports queries
+      queries = [...SPORTS_GNEWS_QUERIES].sort(() => Math.random() - 0.5).slice(0, 3)
     } else if (category === 'entertainment') {
-      // Pick random entertainment topic for variety
-      const topic = ENTERTAINMENT_TOPICS[Math.floor(Math.random() * ENTERTAINMENT_TOPICS.length)]
-      selectedQuery = topic.query
-      console.log(`[GNews] Entertainment topic: "${topic.topic}" — "${selectedQuery}"`)
+      // Shuffle and try multiple entertainment queries — REAL sources only
+      queries = [...ENTERTAINMENT_GNEWS_QUERIES].sort(() => Math.random() - 0.5).slice(0, 4)
     } else {
-      const rand = Math.random()
-      const queries = GNEWS_QUERIES[category] || ['Africa news 2026']
-      const queryIndex = rand < 0.35 ? 0 : rand < 0.70 ? 1 : 2
-      selectedQuery = queries[queryIndex]
+      const q = GNEWS_QUERIES[category] || ['Africa news 2026']
+      const idx = Math.floor(Math.random() * q.length)
+      queries = [q[idx]]
     }
 
-    const q = encodeURIComponent(selectedQuery)
-    const res = await fetch(
-      `https://gnews.io/api/v4/search?q=${q}&lang=en&max=10&in=title,description&apikey=${GNEWS_KEY}`,
-      { next: { revalidate: 1800 } }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    const articles = data.articles || []
-    if (articles.length === 0) return null
+    // Try each query until we find a real article
+    for (const selectedQuery of queries) {
+      console.log(`[GNews] Trying: "${selectedQuery}"`)
+      const q = encodeURIComponent(selectedQuery)
+      const res = await fetch(
+        `https://gnews.io/api/v4/search?q=${q}&lang=en&max=10&in=title,description&apikey=${GNEWS_KEY}`,
+        { next: { revalidate: 1800 } }
+      )
+      if (!res.ok) continue
+      const data = await res.json()
+      const articles = (data.articles || []).filter(a => {
+        // Filter out articles older than 30 days
+        const pub = new Date(a.publishedAt)
+        const daysOld = (Date.now() - pub.getTime()) / (1000 * 60 * 60 * 24)
+        return daysOld <= 30
+      })
+      if (articles.length === 0) continue
 
-    const article = articles[Math.floor(Math.random() * Math.min(articles.length, 5))]
-    console.log(`[GNews] ✓ Got article for ${category}: "${article.title}"`)
-    return {
-      title: article.title || '',
-      description: article.description || '',
-      content: article.content || article.description || '',
-      source: article.source?.name || 'African News',
-      url: article.url || '',
-      publishedAt: article.publishedAt || '',
+      const article = articles[Math.floor(Math.random() * Math.min(articles.length, 5))]
+      console.log(`[GNews] ✓ Found real article: "${article.title}"`)
+      return {
+        title: article.title || '',
+        description: article.description || '',
+        content: article.content || article.description || '',
+        source: article.source?.name || 'African News',
+        url: article.url || '',
+        publishedAt: article.publishedAt || '',
+      }
     }
+
+    console.log(`[GNews] No real articles found for ${category}`)
+    return null
   } catch (err) {
     console.log(`[GNews] Failed for ${category}:`, err.message)
     return null
@@ -216,109 +220,68 @@ function safeParseJSON(text) {
   return JSON.parse(clean)
 }
 
-// ── Sports-specific prompt ────────────────────────────────
+// ── Sports prompt ─────────────────────────────────────────
 function buildSportsPrompt(realArticle) {
   const star = AFRICAN_SPORTS_STARS[Math.floor(Math.random() * AFRICAN_SPORTS_STARS.length)]
   const country = pickCountry()
 
   if (realArticle) {
-    return `You are a senior sports journalist at PulseAfrica, Africa's leading sports news platform. Reformat this REAL sports news article for our African audience.
+    return `You are a senior sports journalist at PulseAfrica. Reformat this REAL sports article for our African audience.
 
-REAL ARTICLE:
+REAL ARTICLE FROM ${realArticle.source.toUpperCase()} (published ${realArticle.publishedAt}):
 Title: ${realArticle.title}
 Description: ${realArticle.description}
 Content: ${realArticle.content}
 
-STRICT RULES:
-1. Use ONLY facts from the real article — never invent scores, transfer fees or quotes
-2. Write with the energy and style of BBC Sport or ESPN — punchy, engaging, exciting
-3. Include context about why this matters for African football/sports fans
-4. Add relevant African sports context where appropriate
-5. Make the headline clickable and SEO-optimized — include player name or competition name
-6. Each language must feel native, not translated
-7. Return ONLY valid JSON
-
-SEO REQUIREMENTS:
-- title_en must include: player name OR competition name + action word (signs, wins, beats, scores, transfers)
-- tags must include: player names, club names, competition, country, "African football"
-- seo_title: exactly 55-60 chars with main keyword first
-- seo_desc: exactly 150-155 chars, include player/team name and action
+CRITICAL RULES:
+1. Use ONLY facts from the real article above — NEVER invent scores, fees, quotes or names
+2. Write with energy like BBC Sport or ESPN
+3. SEO headline must include player/team name + action verb
+4. Return ONLY valid JSON
 
 Return this exact JSON:
-{"title_en":"Punchy SEO headline with player/team name max 80 chars","title_fr":"Titre français accrocheur max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2 exciting sentences about the story max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Engaging sports article 350-450 words. ## 2-3 subheadings. Cover: what happened, player/team reaction, what it means for African football, what happens next. Use active voice. Real facts only.","content_fr":"Article sport français 280-320 mots. ## sous-titres. Mêmes faits.","content_rw":"Inkuru y'imikino Kinyarwanda 220-260 amagambo. ## interuro.","tags":["player_name","club_name","competition","country","african_football","sport_type"],"read_time":4,"location":"City, Country","image_query":"football player action stadium crowd","seo_title":"55-60 char SEO title with keyword first","seo_desc":"150-155 char meta description with player and action"}`
+{"title_en":"Player/team name + action headline max 80 chars","title_fr":"Titre sport français max 80 chars","title_rw":"Umutwe w'imikino Kinyarwanda max 80 chars","summary_en":"2 exciting sentences max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"350-450 word engaging sports article. ## 2-3 subheadings. Real facts only from source.","content_fr":"Article sport français 280-320 mots.","content_rw":"Inkuru y'imikino Kinyarwanda 220-260 amagambo.","tags":["player_name","club","competition","country","sport"],"read_time":4,"location":"City, Country","image_query":"football player action stadium crowd","seo_title":"55-60 char SEO title with keyword first","seo_desc":"150-155 char meta description"}`
   }
 
-  return `You are a senior sports journalist at PulseAfrica. Write a trending sports news article about African sports for 2026.
+  return `You are a senior sports journalist at PulseAfrica. Write a realistic sports article about African sports in 2026.
 
-Choose ONE of these angles randomly:
-- Transfer news: ${star} transfer rumor or completed deal
-- Match report: African team winning important CAF or World Cup qualifier
-- Player milestone: African player achieving record or award in European league
-- Competition update: AFCON 2026 qualification standings
-- Basketball: Basketball Africa League (BAL) 2026 update
-- Athletics: African runner or field athlete breaking record
+Write about ONE of these REAL ongoing situations:
+- ${star} current season performance or transfer situation
+- AFCON 2026 qualification standings
+- CAF Champions League current round
+- Basketball Africa League (BAL) 2026 season
+- Africa 2026 FIFA World Cup preparation
 
-RULES:
-1. Write about REAL ongoing situations in African sports in 2026
-2. Use real known African players and real competitions — never invent fake statistics
-3. Write with excitement and energy — make readers feel the moment
-4. Make the SEO headline include a specific player name or competition
-5. Return ONLY valid JSON
+CRITICAL: Write about REAL known players and REAL competitions only. Never invent specific scores or transfer fees.
 
 Return this exact JSON:
-{"title_en":"Exciting sports headline with player/competition name max 80 chars","title_fr":"Titre sport français max 80 chars","title_rw":"Umutwe w'imikino Kinyarwanda max 80 chars","summary_en":"2 exciting sentences max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Engaging 350-450 word sports article. ## 2-3 subheadings. Cover the news angle, African context, fan reaction, what happens next.","content_fr":"Article sport français 280-320 mots.","content_rw":"Inkuru y'imikino Kinyarwanda 220-260 amagambo.","tags":["player_name","competition","country","african_football","sport_type","club"],"read_time":4,"location":"City, ${country}","image_query":"african football player stadium action crowd","seo_title":"55-60 char SEO title","seo_desc":"150-155 char meta description"}`
+{"title_en":"Specific sports headline with real player/competition max 80 chars","title_fr":"Titre sport français max 80 chars","title_rw":"Umutwe w'imikino Kinyarwanda max 80 chars","summary_en":"2 exciting sentences max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"350-450 word sports article. ## 2-3 subheadings. Real facts only.","content_fr":"Article sport français 280-320 mots.","content_rw":"Inkuru y'imikino Kinyarwanda 220-260 amagambo.","tags":["player_name","competition","country","sport","africa"],"read_time":4,"location":"City, ${country}","image_query":"african football player stadium action","seo_title":"55-60 char SEO title","seo_desc":"150-155 char meta description"}`
 }
 
-// ── Entertainment-specific prompt ─────────────────────────
+// ── Entertainment prompt — REAL sources only ──────────────
 function buildEntertainmentPrompt(realArticle) {
-  const star = AFRICAN_ENTERTAINMENT_STARS[Math.floor(Math.random() * AFRICAN_ENTERTAINMENT_STARS.length)]
-  const country = pickCountry()
-
   if (realArticle) {
-    return `You are a senior entertainment journalist at PulseAfrica, Africa's leading entertainment news platform. Reformat this REAL entertainment article for our African audience.
+    return `You are a senior entertainment journalist at PulseAfrica. Reformat this REAL entertainment article for our African audience.
 
-REAL ARTICLE:
+REAL ARTICLE FROM ${realArticle.source.toUpperCase()} (published ${realArticle.publishedAt}):
 Title: ${realArticle.title}
 Description: ${realArticle.description}
 Content: ${realArticle.content}
 
-STRICT RULES:
-1. Use ONLY facts from the real article
-2. Write with the style of Billboard, Rolling Stone or OkayAfrica — vibrant, cultural, engaging
-3. Connect the story to African music culture (Afrobeats, Amapiano, Nollywood etc.)
-4. Make the headline include the artist name for maximum SEO value
+CRITICAL RULES:
+1. Use ONLY facts from the real article — NEVER invent song names, album titles or quotes
+2. Write with style of Billboard or OkayAfrica — vibrant and engaging
+3. SEO headline must include artist name + action (releases, wins, announces, drops)
+4. Connect to African music culture where relevant
 5. Return ONLY valid JSON
 
-SEO REQUIREMENTS:
-- title_en must include: artist name + action (releases, drops, wins, announces, collaborates)
-- tags: artist name, album/song name, genre, country, music platform
-- seo_title: 55-60 chars with artist name first
-- seo_desc: 150-155 chars mentioning artist and release/event
-
 Return this exact JSON:
-{"title_en":"Artist name + action headline max 80 chars","title_fr":"Titre entertainment français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2 exciting sentences about the story max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Engaging entertainment article 350-450 words. ## 2-3 subheadings. Cover: what the artist released/did, fan reaction on social media, chart performance, African cultural significance, what comes next.","content_fr":"Article entertainment français 280-320 mots. ## sous-titres.","content_rw":"Inkuru y'abahanzi Kinyarwanda 220-260 amagambo. ## interuro.","tags":["artist_name","song_album_name","genre","country","afrobeats_or_nollywood","platform"],"read_time":4,"location":"City, Country","image_query":"african music concert performance stage lights","seo_title":"55-60 char SEO title with artist name first","seo_desc":"150-155 char meta description"}`
+{"title_en":"Artist name + action headline max 80 chars","title_fr":"Titre entertainment français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2 exciting sentences max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"350-450 word engaging entertainment article. ## 2-3 subheadings. ONLY facts from real article above.","content_fr":"Article entertainment français 280-320 mots.","content_rw":"Inkuru y'abahanzi Kinyarwanda 220-260 amagambo.","tags":["artist_name","song_or_album","genre","country","platform"],"read_time":4,"location":"City, Country","image_query":"african music concert performance stage lights","seo_title":"55-60 char SEO title with artist name first","seo_desc":"150-155 char meta description"}`
   }
 
-  return `You are a senior entertainment journalist at PulseAfrica. Write a trending entertainment news article about African music and entertainment for 2026.
-
-Choose ONE of these angles randomly:
-- New music: ${star} drops new single or album — include fictional but realistic track name
-- Award news: African artist wins or nominated for major award (BET, Grammy, MOBO)
-- Concert/Tour: Major African artist announces African tour dates
-- Nollywood: New blockbuster Nollywood film release or streaming on Netflix
-- Collaboration: African artist collaborates with international star
-- Chart success: African song breaks streaming records on Spotify/Apple Music
-- Festival: Major African music festival announcement or highlights
-
-RULES:
-1. Write about realistic trending situations in African entertainment in 2026
-2. Use real known African artists — make up realistic song/album titles only
-3. Include social media fan reaction and streaming numbers for realism
-4. Make content feel like it was written by a culture journalist who loves African music
-5. Return ONLY valid JSON
-
-Return this exact JSON:
-{"title_en":"Artist name + action headline max 80 chars","title_fr":"Titre entertainment français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2 exciting sentences max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Vibrant 350-450 word entertainment article. ## 2-3 subheadings. Artist background, what they released/did, fan reaction, streaming stats, cultural significance, what's next.","content_fr":"Article entertainment français 280-320 mots.","content_rw":"Inkuru y'abahanzi Kinyarwanda 220-260 amagambo.","tags":["artist_name","song_or_album","genre","country","afrobeats","streaming_platform"],"read_time":4,"location":"City, ${country}","image_query":"african music artist concert performance stage","seo_title":"55-60 char SEO title with artist name","seo_desc":"150-155 char meta description"}`
+  // ── NO real article found — skip rather than hallucinate ──
+  // Return null to signal cron to skip this cycle
+  return null
 }
 
 export async function generateArticle(category) {
@@ -331,8 +294,12 @@ export async function generateArticle(category) {
     prompt = buildSportsPrompt(realArticle)
   } else if (category === 'entertainment') {
     prompt = buildEntertainmentPrompt(realArticle)
+    // If no real article found for entertainment — throw error to skip
+    if (!prompt) {
+      throw new Error('No real entertainment news found — skipping to avoid hallucination')
+    }
   } else if (realArticle) {
-    prompt = `You are PulseAfrica, Africa's trilingual news platform. Reformat and translate this REAL news article.
+    prompt = `You are PulseAfrica, Africa's trilingual news platform. Reformat this REAL news article.
 
 REAL ARTICLE FROM ${realArticle.source.toUpperCase()}:
 Title: ${realArticle.title}
@@ -340,28 +307,25 @@ Description: ${realArticle.description}
 Content: ${realArticle.content}
 
 STRICT RULES:
-1. Use ONLY facts from the real article — do NOT invent any facts
-2. Professional rewrite in journalistic style
+1. Use ONLY facts from the real article
+2. Professional journalistic rewrite
 3. Each language must feel native
 4. Return ONLY valid JSON
-5. SEO: title must include main subject + location, tags must be specific
 
 Return this exact JSON:
-{"title_en":"SEO headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"Professional 350-450 word article. ## 2-3 headings. Facts only.","content_fr":"Article français 280-320 mots. ## sous-titres.","content_rw":"Ingingo Kinyarwanda 220-260 amagambo. ## interuro.","tags":["specific_tag1","specific_tag2","country","topic","africa"],"read_time":4,"location":"City, Country","image_query":"specific 4-5 word Unsplash query","seo_title":"55-60 char SEO title with keyword first","seo_desc":"150-155 char meta description"}`
+{"title_en":"SEO headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"350-450 word article. ## 2-3 headings. Facts only.","content_fr":"Article français 280-320 mots.","content_rw":"Ingingo Kinyarwanda 220-260 amagambo.","tags":["tag1","tag2","country","topic","africa"],"read_time":4,"location":"City, Country","image_query":"specific 4-5 word Unsplash query","seo_title":"55-60 char SEO title","seo_desc":"150-155 char meta description"}`
   } else {
     const country = pickCountry()
-    const country2 = pickCountry()
-    prompt = `You are PulseAfrica, Africa's news platform. Generate a realistic ${catMeta.label} news article about ${country} for 2026.
+    prompt = `You are PulseAfrica. Generate a realistic ${catMeta.label} news article about ${country} for 2026.
 
 RULES:
 1. Write about REAL ongoing situations in ${country} in 2026
-2. Use real known leaders and officials — never invent fake names
-3. Journalistic style — factual, grounded
-4. Each language must feel native
-5. Return ONLY valid JSON
+2. Use real known leaders — never invent names or statistics
+3. Journalistic style — factual and grounded
+4. Return ONLY valid JSON
 
 Return this exact JSON:
-{"title_en":"SEO headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"350-450 word article. ## 2-3 headings. Real facts only.","content_fr":"Article français 280-320 mots.","content_rw":"Ingingo Kinyarwanda 220-260 amagambo.","tags":["specific_tag1","country","topic","africa","category"],"read_time":4,"location":"City, ${country}","image_query":"specific 4-5 word query","seo_title":"55-60 char SEO title","seo_desc":"150-155 char meta description"}`
+{"title_en":"SEO headline max 80 chars","title_fr":"Titre français max 80 chars","title_rw":"Umutwe Kinyarwanda max 80 chars","summary_en":"2-sentence summary max 200 chars","summary_fr":"Résumé français 2 phrases","summary_rw":"Incamake Kinyarwanda interuro 2","content_en":"350-450 word article. ## 2-3 headings.","content_fr":"Article français 280-320 mots.","content_rw":"Ingingo Kinyarwanda 220-260 amagambo.","tags":["tag1","country","topic","africa","category"],"read_time":4,"location":"City, ${country}","image_query":"specific 4-5 word query","seo_title":"55-60 char SEO title","seo_desc":"150-155 char meta description"}`
   }
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -374,7 +338,7 @@ Return this exact JSON:
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2500,
-      temperature: 0.4,
+      temperature: 0.3,
       response_format: { type: 'json_object' }
     })
   })
@@ -385,7 +349,9 @@ Return this exact JSON:
   if (!text) throw new Error('Groq returned empty text')
 
   const parsed = safeParseJSON(text)
-  const imageUrl = await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
+  const imageUrl = await fetchUnsplashImage(
+    parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category
+  )
 
   const slug = slugify(parsed.title_en || category, { lower: true, strict: true }).slice(0, 80)
     + '-' + Date.now().toString(36)
@@ -424,7 +390,7 @@ export async function generateAllCategories() {
       console.log(`[Engine] ✓ ${cat.label}: "${(article.title_en || '').slice(0, 60)}"`)
       await new Promise(r => setTimeout(r, 800))
     } catch (err) {
-      console.error(`[Engine] ✗ Failed ${cat.id}:`, err.message)
+      console.error(`[Engine] ✗ Skipped ${cat.id}: ${err.message}`)
     }
   }
   return results
