@@ -22,8 +22,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* Google AdSense — replace ca-pub-XXXXXX after approval */}
-        {/* <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossOrigin="anonymous"></script> */}
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5287640072959856"
+          crossOrigin="anonymous"
+        />
       </head>
       <body>
         {/* Google Analytics */}
@@ -40,7 +44,7 @@ export default function RootLayout({ children }) {
           `}
         </Script>
 
-        {/* Heaven atmospheric lights — live behind everything */}
+        {/* Heaven atmospheric lights */}
         <div className="heaven" aria-hidden="true">
           <div className="h-apex" />
           <div className="h-amber" />
