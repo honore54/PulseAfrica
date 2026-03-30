@@ -19,12 +19,12 @@ const CAT_META = {
 }
 
 const AUTHOR_META = {
-  'amara-diallo':  { name:'Amara Diallo',  title:'Senior Africa Correspondent',    avatar:'AD' },
-  'kwame-asante':  { name:'Kwame Asante',  title:'Sports & Culture Editor',        avatar:'KA' },
-  'nadia-okonkwo': { name:'Nadia Okonkwo', title:'Tech & Business Reporter',       avatar:'NO' },
-  'ibrahim-hassan':{ name:'Ibrahim Hassan',title:'East Africa Bureau Chief',       avatar:'IH' },
+  'amara-diallo':  { name:'Amara Diallo',  title:'Senior Africa Correspondent',     avatar:'AD' },
+  'kwame-asante':  { name:'Kwame Asante',  title:'Sports & Culture Editor',         avatar:'KA' },
+  'nadia-okonkwo': { name:'Nadia Okonkwo', title:'Tech & Business Reporter',        avatar:'NO' },
+  'ibrahim-hassan':{ name:'Ibrahim Hassan',title:'East Africa Bureau Chief',        avatar:'IH' },
   'zainab-mensah': { name:'Zainab Mensah', title:'Entertainment & Lifestyle Writer',avatar:'ZM' },
-  'chidi-eze':     { name:'Chidi Eze',     title:'Investigations & Analysis',      avatar:'CE' },
+  'chidi-eze':     { name:'Chidi Eze',     title:'Investigations & Analysis',       avatar:'CE' },
 }
 
 function renderContent(text = '') {
@@ -58,7 +58,11 @@ export async function generateMetadata({ params, searchParams }) {
   const summary = article[`summary_${t}`] || article.summary_en || ''
   const cat = CAT_META[article.category] || CAT_META.africa
   const author = AUTHOR_META[article.author_id] || null
-  const url = `https://pulse-africa.vercel.app/article/${slug}${lang !== 'en' ? `?lang=${lang}` : ''}`
+
+  // ── FIXED: canonical always points to base URL without lang param ──
+  const canonicalUrl = `https://pulse-africa.vercel.app/article/${slug}`
+  const ogUrl = `https://pulse-africa.vercel.app/article/${slug}${lang !== 'en' ? `?lang=${lang}` : ''}`
+
   const image = article.image_url || 'https://pulse-africa.vercel.app/og-default.jpg'
   const keywords = [
     ...(article.tags || []),
@@ -72,9 +76,17 @@ export async function generateMetadata({ params, searchParams }) {
     keywords,
     authors: [{ name: author ? author.name : 'PulseAfrica Editorial Team' }],
     metadataBase: new URL('https://pulse-africa.vercel.app'),
-    alternates: { canonical: url },
+    // ── FIXED: canonical is always the clean URL without ?lang ──
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `https://pulse-africa.vercel.app/article/${slug}`,
+        'fr': `https://pulse-africa.vercel.app/article/${slug}?lang=fr`,
+        'rw': `https://pulse-africa.vercel.app/article/${slug}?lang=rw`,
+      }
+    },
     openGraph: {
-      title, description: summary, url, siteName: 'PulseAfrica',
+      title, description: summary, url: ogUrl, siteName: 'PulseAfrica',
       images: [{ url: image, width: 1200, height: 630, alt: title }],
       locale: lang === 'fr' ? 'fr_FR' : lang === 'rw' ? 'rw_RW' : 'en_US',
       type: 'article',
