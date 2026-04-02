@@ -61,70 +61,55 @@ export async function fetchUnsplashImage(query, category) {
 
 const GNEWS_QUERIES = {
   politics: [
-    'Africa election 2026','African Union summit 2026','UN Africa diplomacy',
-    'Africa government reform','Africa president parliament 2026',
-    'Rwanda Kenya Ghana politics','Africa coup election protest',
-    'Africa sanctions peace deal','Africa opposition leader',
-    'South Africa Nigeria politics','Africa minister policy',
-    'African democracy human rights','Africa foreign policy',
-    'Africa security conflict 2026','Africa regional bloc summit',
+    'Africa election 2026','African Union summit','Africa government reform',
+    'Africa president parliament','South Africa Nigeria politics',
+    'Africa sanctions peace deal','African democracy','Africa foreign policy',
+    'Africa security conflict','Africa regional summit',
   ],
   africa: [
-    'Africa economy development 2026','African Union policy',
-    'IMF World Bank Africa','Africa infrastructure investment',
-    'Africa climate change','Africa food security crisis',
-    'Africa health WHO','Africa migration displacement',
-    'Africa education poverty','Africa humanitarian aid',
-    'Africa drought flood','Africa renewable energy',
-    'Africa debt relief','Africa diaspora remittance',
-    'Africa continental news',
+    'Africa economy development','African Union policy','IMF World Bank Africa',
+    'Africa infrastructure','Africa climate change','Africa food security',
+    'Africa health news','Africa humanitarian','Africa renewable energy',
+    'Africa debt economy',
   ],
   technology: [
-    'Africa fintech startup 2026','Africa technology innovation',
-    'Africa mobile internet','Africa AI artificial intelligence',
-    'Africa tech hub startup','Africa cryptocurrency blockchain',
-    'Africa solar energy technology','Africa 5G connectivity',
-    'Nigeria Kenya tech ecosystem','Africa digital payment',
-    'Africa e-commerce','Africa cybersecurity',
-    'Africa space satellite','Africa edtech healthtech',
-    'Africa smartphone access',
+    'Africa fintech startup','Africa technology innovation','Africa mobile internet',
+    'Africa artificial intelligence','Africa tech hub','Africa digital payment',
+    'Africa e-commerce','Africa cybersecurity','Nigeria Kenya tech',
+    'Africa 5G connectivity',
   ],
   business: [
-    'Africa investment trade 2026','Africa economy GDP',
-    'Africa business market','Africa stock exchange',
-    'Africa oil commodity price','Africa startup funding round',
-    'Africa agriculture export','Africa banking finance',
-    'Africa AFCFTA trade deal','Africa private equity',
-    'Africa IMF loan','Africa mining resources',
-    'Africa manufacturing','Africa logistics supply chain',
-    'Africa forex currency',
+    'Africa investment trade','Africa economy GDP','Africa business market',
+    'Africa stock exchange','Africa startup funding','Africa banking finance',
+    'Africa AFCFTA trade','Africa mining resources','Africa agriculture export',
+    'Africa oil price',
   ],
   sports: [
-    'African footballer transfer 2026','AFCON Africa Cup Nations',
-    'African player Premier League','CAF Champions League 2026',
-    'Africa FIFA World Cup 2026','Basketball Africa League',
-    'Mohamed Salah 2026','Victor Osimhen 2026','Achraf Hakimi',
-    'Africa athletics 2026','Africa rugby','African boxing champion',
-    'Sadio Mane club','Andre Onana','CAF Confederation Cup',
-    'Wilfried Zaha','Africa tennis','Africa cricket',
-    'African sports result','Riyad Mahrez',
+    'African football news','AFCON Africa Cup','CAF Champions League',
+    'Africa World Cup 2026','Mohamed Salah','Victor Osimhen',
+    'African Premier League','Africa athletics','Basketball Africa League',
+    'Africa rugby sport',
   ],
   entertainment: [
-    'Afrobeats music 2026','African music award 2026','Nollywood film 2026',
-    'Burna Boy 2026','Wizkid music 2026','Davido 2026',
-    'Tems music 2026','Rema Afrobeats','Amapiano chart 2026',
-    'African Grammy 2026','BET Awards Africa','African Netflix series',
-    'Stonebwoy music','Sarkodie Ghana','Diamond Platnumz',
-    'African music tour','Nollywood box office','Tyla music',
-    'Asake concert','Ayra Starr music','Afrobeats streaming record',
-    'African artist collaboration','Africa pop culture 2026',
-    'African concert event','Afrobeats UK chart',
+    'Afrobeats music','African music award','Nollywood 2026',
+    'Burna Boy','Wizkid music','Davido music',
+    'Tems Afrobeats','Amapiano music','African Grammy',
+    'African Netflix music',
   ],
 }
 
 const NEWSDATA_CATEGORY_MAP = {
   politics: 'politics', sports: 'sports', entertainment: 'entertainment',
   africa: 'world', technology: 'technology', business: 'business',
+}
+
+const NEWSDATA_COUNTRIES = {
+  politics:      'ng,za,ke',
+  sports:        'ng,za,ke',
+  entertainment: 'ng,gh,za',
+  africa:        'ng,ke,za',
+  technology:    'ng,ke,gh',
+  business:      'ng,za,ke',
 }
 
 const GNEWS_TOPIC_MAP = {
@@ -172,7 +157,8 @@ function markSeen(title) {
 
 function pickBest(articles) {
   if (!articles.length) return null
-  return articles.slice(0, Math.min(5, articles.length))[Math.floor(Math.random() * Math.min(5, articles.length))]
+  const pool = articles.slice(0, Math.min(5, articles.length))
+  return pool[Math.floor(Math.random() * pool.length)]
 }
 
 async function gnewsSearch(query, maxDays = 30) {
@@ -180,24 +166,13 @@ async function gnewsSearch(query, maxDays = 30) {
     `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=10&sortby=publishedAt&in=title,description&apikey=${GNEWS_KEY}`,
     { next: { revalidate: 900 } }
   )
-  if (res.status === 429) throw new Error('GNEWS_RATE_LIMITED')
+  if (res.status === 429 || res.status === 403) throw new Error('GNEWS_QUOTA_EXCEEDED')
   if (!res.ok) throw new Error(`GNews HTTP ${res.status}`)
   const data = await res.json()
   return (data.articles || []).filter(a => {
     const age = (Date.now() - new Date(a.publishedAt).getTime()) / 86400000
     return age <= maxDays && !isDuplicate(a.title)
   })
-}
-
-async function gnewsTopHeadlines(category) {
-  const res = await fetch(
-    `https://gnews.io/api/v4/top-headlines?topic=${GNEWS_TOPIC_MAP[category] || 'nation'}&lang=en&max=10&sortby=publishedAt&apikey=${GNEWS_KEY}`,
-    { next: { revalidate: 900 } }
-  )
-  if (res.status === 429) throw new Error('GNEWS_RATE_LIMITED')
-  if (!res.ok) throw new Error(`GNews headlines HTTP ${res.status}`)
-  const data = await res.json()
-  return (data.articles || []).filter(a => !isDuplicate(a.title))
 }
 
 function formatGnews(a) {
@@ -212,17 +187,20 @@ function formatGnews(a) {
 }
 
 async function newsdataSearch(query, category) {
-  if (!NEWSDATA_KEY) throw new Error('NEWSDATA_KEY not configured')
-  const cat = NEWSDATA_CATEGORY_MAP[category] || 'world'
-  const res = await fetch(
-    `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY}&q=${encodeURIComponent(query)}&language=en&category=${cat}&country=ng,ke,gh,za,rw,et,eg,ma,tz,ug&prioritydomain=top`,
-    { next: { revalidate: 900 } }
-  )
+  if (!NEWSDATA_KEY) throw new Error('NEWSDATA_KEY not set')
+  const cat     = NEWSDATA_CATEGORY_MAP[category] || 'world'
+  const country = NEWSDATA_COUNTRIES[category]    || 'ng,ke,za'
+  const url = `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY}&q=${encodeURIComponent(query)}&language=en&category=${cat}&country=${country}`
+  const res = await fetch(url, { next: { revalidate: 900 } })
   if (res.status === 429) throw new Error('NEWSDATA_RATE_LIMITED')
+  if (res.status === 422) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(`NewsData 422: ${JSON.stringify(body?.results?.message || body)}`)
+  }
   if (!res.ok) throw new Error(`NewsData HTTP ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && a.description && !isDuplicate(a.title))
+    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title))
     .map(a => ({
       title:       a.title,
       description: a.description || '',
@@ -234,13 +212,16 @@ async function newsdataSearch(query, category) {
 }
 
 async function newsdataLatest(category) {
-  if (!NEWSDATA_KEY) throw new Error('NEWSDATA_KEY not configured')
-  const cat = NEWSDATA_CATEGORY_MAP[category] || 'world'
-  const res = await fetch(
-    `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&language=en&category=${cat}&country=ng,ke,gh,za,rw,et,eg,ma,tz,ug`,
-    { next: { revalidate: 900 } }
-  )
+  if (!NEWSDATA_KEY) throw new Error('NEWSDATA_KEY not set')
+  const cat     = NEWSDATA_CATEGORY_MAP[category] || 'world'
+  const country = NEWSDATA_COUNTRIES[category]    || 'ng,ke,za'
+  const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&language=en&category=${cat}&country=${country}`
+  const res = await fetch(url, { next: { revalidate: 900 } })
   if (res.status === 429) throw new Error('NEWSDATA_RATE_LIMITED')
+  if (res.status === 422) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(`NewsData latest 422: ${JSON.stringify(body?.results?.message || body)}`)
+  }
   if (!res.ok) throw new Error(`NewsData latest HTTP ${res.status}`)
   const data = await res.json()
   return (data.results || [])
@@ -255,32 +236,74 @@ async function newsdataLatest(category) {
     }))
 }
 
-export async function fetchRealArticle(category) {
-  const pool    = [...(GNEWS_QUERIES[category] || [])].sort(() => Math.random() - 0.5)
-  const sample5 = pool.slice(0, 5)
+async function groqWebFallback(category) {
+  console.log(`[Groq fallback:${category}] Using Groq knowledge as final safety net...`)
+  const country = pickCountry()
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{
+        role: 'user',
+        content: `You are a news research assistant. Provide ONE real verified news story about ${category} in Africa from 2025 or 2026.
 
-  if (GNEWS_KEY) {
-    for (const query of sample5) {
+RULES:
+- Only write about events you are confident actually happened
+- Include the real source name (BBC, Reuters, Al Jazeera, CNN, etc.)
+- Do not invent quotes or statistics
+- Country focus: ${country}
+- Return ONLY this JSON:
+
+{
+  "title": "Real news headline",
+  "description": "2-sentence factual summary",
+  "content": "3-4 paragraph factual account. No invented quotes.",
+  "source": "BBC Africa / Reuters / Al Jazeera / etc.",
+  "url": "",
+  "publishedAt": "2026-01-01T00:00:00Z"
+}`
+      }],
+      max_tokens: 800,
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
+    }),
+  })
+  const json = await res.json()
+  if (json.error) throw new Error(`Groq fallback: ${json.error.message}`)
+  const text = json.choices?.[0]?.message?.content || ''
+  if (!text) throw new Error('Groq fallback empty')
+  const parsed = JSON.parse(text)
+  if (!parsed.title || parsed.title.length < 10) throw new Error('Groq fallback invalid title')
+  if (isDuplicate(parsed.title)) throw new Error('Groq fallback duplicate')
+  console.log(`[Groq fallback:${category}] ✓ "${parsed.title}"`)
+  return parsed
+}
+
+export async function fetchRealArticle(category) {
+  const pool = [...(GNEWS_QUERIES[category] || [])].sort(() => Math.random() - 0.5)
+  let gnewsQuotaExhausted = false
+
+  // Stage 1: GNews — only 2 queries to conserve quota
+  if (GNEWS_KEY && !gnewsQuotaExhausted) {
+    for (const query of pool.slice(0, 2)) {
       try {
         console.log(`[GNews:${category}] "${query}"`)
         const articles = await gnewsSearch(query)
         const pick     = pickBest(articles)
         if (pick) { console.log(`[GNews:${category}] ✓ "${pick.title}"`); return formatGnews(pick) }
       } catch (err) {
-        if (err.message === 'GNEWS_RATE_LIMITED') { console.warn(`[GNews] Rate limited — switching to NewsData`); break }
+        if (err.message === 'GNEWS_QUOTA_EXCEEDED') {
+          console.warn(`[GNews] Quota exceeded — switching to NewsData`)
+          gnewsQuotaExhausted = true
+          break
+        }
         console.warn(`[GNews:${category}] "${query}": ${err.message}`)
       }
     }
-    try {
-      console.log(`[GNews:${category}] Trying top-headlines...`)
-      const articles = await gnewsTopHeadlines(category)
-      const pick     = pickBest(articles)
-      if (pick) { console.log(`[GNews:${category}] ✓ Headline: "${pick.title}"`); return formatGnews(pick) }
-    } catch (err) {
-      console.warn(`[GNews:${category}] Headlines: ${err.message}`)
-    }
   }
 
+  // Stage 2: NewsData search
   if (NEWSDATA_KEY) {
     for (const query of pool.slice(0, 3)) {
       try {
@@ -293,8 +316,10 @@ export async function fetchRealArticle(category) {
         console.warn(`[NewsData:${category}] "${query}": ${err.message}`)
       }
     }
+
+    // Stage 3: NewsData latest
     try {
-      console.log(`[NewsData:${category}] Trying latest headlines...`)
+      console.log(`[NewsData:${category}] Trying latest...`)
       const results = await newsdataLatest(category)
       const pick    = pickBest(results)
       if (pick) { console.log(`[NewsData:${category}] ✓ Latest: "${pick.title}"`); return pick }
@@ -303,18 +328,14 @@ export async function fetchRealArticle(category) {
     }
   }
 
-  if (GNEWS_KEY) {
-    try {
-      console.log(`[GNews:${category}] Absolute fallback: "Africa"`)
-      const articles = await gnewsSearch('Africa', 60)
-      const pick     = pickBest(articles)
-      if (pick) { console.log(`[GNews:${category}] ✓ Fallback: "${pick.title}"`); return formatGnews(pick) }
-    } catch (err) {
-      console.warn(`[GNews:${category}] Fallback: ${err.message}`)
-    }
+  // Stage 4: Groq knowledge fallback
+  try {
+    return await groqWebFallback(category)
+  } catch (err) {
+    console.warn(`[Groq fallback:${category}] ${err.message}`)
   }
 
-  throw new Error(`No real article found for "${category}" — all 5 stages exhausted`)
+  throw new Error(`All sources exhausted for "${category}"`)
 }
 
 function safeParseJSON(text) {
@@ -424,8 +445,8 @@ export async function generateArticle(category, maxRetries = 3) {
         tags:         Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5) : [],
         seo_title:    parsed.seo_title,
         seo_desc:     parsed.seo_desc,
-        source_url:   realArticle.url,
-        source_name:  realArticle.source,
+        source_url:   realArticle.url    || '',
+        source_name:  realArticle.source || '',
         title_en:   parsed.title_en,   title_fr:   parsed.title_fr,   title_rw:   parsed.title_rw,
         summary_en: parsed.summary_en, summary_fr: parsed.summary_fr, summary_rw: parsed.summary_rw,
         content_en: parsed.content_en, content_fr: parsed.content_fr, content_rw: parsed.content_rw,
@@ -442,7 +463,7 @@ export async function generateArticle(category, maxRetries = 3) {
 
 export async function generateAllCategories() {
   console.log(`\n[Engine] SESSION ${new Date().toISOString()}`)
-  console.log(`[Engine] GNews=${GNEWS_KEY?'✓':'MISSING'}  NewsData=${NEWSDATA_KEY?'✓':'add NEWSDATA_API_KEY'}  Groq=${GROQ_KEY?'✓':'MISSING'}`)
+  console.log(`[Engine] GNews=${GNEWS_KEY?'✓':'MISSING'}  NewsData=${NEWSDATA_KEY?'✓':'MISSING'}  Groq=${GROQ_KEY?'✓':'MISSING'}`)
   const results  = []
   const failures = []
   for (const cat of CATEGORIES) {
@@ -456,8 +477,8 @@ export async function generateAllCategories() {
       await new Promise(r => setTimeout(r, 1000))
     }
   }
-  console.log(`[Engine] ${results.length}/6 articles generated, ${failures.length} failed`)
+  console.log(`[Engine] ${results.length}/6 articles, ${failures.length} failed`)
   if (failures.length) failures.forEach(f => console.error(`  • ${f.category}: ${f.error}`))
-  if (results.length === 0) throw new Error('Zero articles — check GNEWS_API_KEY + GROQ_API_KEY')
+  if (results.length === 0) throw new Error('Zero articles — check API keys')
   return results
 }
