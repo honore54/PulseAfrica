@@ -12,6 +12,7 @@ export async function GET() {
     { loc: `${baseUrl}/about`,                  lastmod: now, changefreq: 'monthly', priority: '0.6' },
     { loc: `${baseUrl}/contact`,                lastmod: now, changefreq: 'monthly', priority: '0.6' },
     { loc: `${baseUrl}/privacy`,                lastmod: now, changefreq: 'monthly', priority: '0.4' },
+    { loc: `${baseUrl}/terms`,                  lastmod: now, changefreq: 'monthly', priority: '0.4' },
     { loc: `${baseUrl}/category/politics`,      lastmod: now, changefreq: 'hourly',  priority: '0.9' },
     { loc: `${baseUrl}/category/sports`,        lastmod: now, changefreq: 'hourly',  priority: '0.9' },
     { loc: `${baseUrl}/category/entertainment`, lastmod: now, changefreq: 'hourly',  priority: '0.9' },
@@ -35,6 +36,7 @@ export async function GET() {
       .limit(500)
 
     articleUrls = (data || []).map(a => ({
+      // ── CRITICAL: Never include ?lang= in sitemap ──
       loc: `${baseUrl}/article/${a.slug}`,
       lastmod: new Date(a.published_at).toISOString(),
       changefreq: 'monthly',
@@ -45,7 +47,8 @@ export async function GET() {
   const allUrls = [...staticUrls, ...articleUrls]
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${allUrls.map(u => `  <url>
     <loc>${u.loc}</loc>
     <lastmod>${u.lastmod}</lastmod>
