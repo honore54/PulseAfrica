@@ -455,7 +455,7 @@ export async function generateArticle(category, maxRetries = 3) {
     } catch (err) {
       lastError = err
       console.warn(`[Engine] ✗ ${category} attempt ${attempt}: ${err.message}`)
-      if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 1500))
+      if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 12000))
     }
   }
   throw new Error(`${category} failed all ${maxRetries} attempts — ${lastError?.message}`)
@@ -474,7 +474,7 @@ export async function generateAllCategories() {
       failures.push({ category: cat.id, error: err.message })
     }
     if (results.length + failures.length < CATEGORIES.length) {
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 15000))
     }
   }
   console.log(`[Engine] ${results.length}/6 articles, ${failures.length} failed`)
