@@ -161,6 +161,23 @@ function pickBest(articles) {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
+
+// ── Sensitive content filter ─────────────────────────────
+const SENSITIVE_KEYWORDS = [
+  'homosexual','homosexuality','gay','lesbian','lgbt','lgbtq',
+  'transgender','sexual orientation','same-sex','porn','prostitut',
+  'rape','sexual assault','pedophil','child abuse','terrorist',
+  'genocide','ethnic cleansing','suicide bomb','beheading',
+]
+
+function isSensitive(article) {
+  const text = [article.title, article.description, article.content]
+    .join(' ').toLowerCase()
+  const match = SENSITIVE_KEYWORDS.find(kw => text.includes(kw))
+  if (match) console.log(`[Filter] ⚠️ Sensitive content blocked: "${match}" in "${article.title}"`)
+  return !!match
+}
+
 async function gnewsSearch(query, maxDays = 30) {
   const res = await fetch(
     `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=10&sortby=publishedAt&in=title,description&apikey=${GNEWS_KEY}`,
@@ -171,7 +188,7 @@ async function gnewsSearch(query, maxDays = 30) {
   const data = await res.json()
   return (data.articles || []).filter(a => {
     const age = (Date.now() - new Date(a.publishedAt).getTime()) / 86400000
-    return age <= maxDays && !isDuplicate(a.title)
+    return age <= maxDays && !isDuplicate(a.title) && !isSensitive(a)
   })
 }
 
@@ -200,7 +217,7 @@ async function newsdataSearch(query, category) {
   if (!res.ok) throw new Error(`NewsData HTTP ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title))
+    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title) && !isSensitive(a))
     .map(a => ({
       title:       a.title,
       description: a.description || '',
@@ -225,7 +242,7 @@ async function newsdataLatest(category) {
   if (!res.ok) throw new Error(`NewsData latest HTTP ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && !isDuplicate(a.title))
+    .filter(a => a.title && !isDuplicate(a.title) && !isSensitive(a))
     .map(a => ({
       title:       a.title,
       description: a.description || '',
