@@ -17,59 +17,54 @@ const CATEGORY_KEYWORDS = {
 
 function isArticleRelevant(article, categoryId) {
   const keywords = CATEGORY_KEYWORDS[categoryId] || []
-  const text = [article.title_en || '', article.summary_en || '', article.content_en?.slice(0, 500) || ''].join(' ').toLowerCase()
+  const text = [article.title_en||'',article.summary_en||'',article.content_en?.slice(0,300)||''].join(' ').toLowerCase()
   const matches = keywords.filter(kw => text.includes(kw))
-  if (matches.length < 2) console.log(`[CRON] ⚠️ Mismatch ${categoryId}: ${matches.length} matches`)
   return matches.length >= 2
 }
 
-async function generateUniqueArticle(categoryId, admin, maxRetries = 3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+async function generateForCategory(categoryId, admin) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const article = await generateArticle(categoryId)
       if (!isArticleRelevant(article, categoryId)) {
-        console.log(`[CRON] ✗ Not relevant to ${categoryId} — retry ${attempt}`)
+        console.log(`[CRON] ✗ ${categoryId} not relevant — retry ${attempt}`)
         continue
       }
       const { data: existing } = await admin
         .from('articles').select('id')
-        .ilike('title_en', `%${article.title_en.slice(0, 40)}%`)
+        .ilike('title_en', `%${article.title_en.slice(0,40)}%`)
         .limit(1)
-      if (existing && existing.length > 0) {
-        console.log(`[CRON] ✗ Duplicate — retry ${attempt}`)
+      if (existing?.length > 0) {
+        console.log(`[CRON] ✗ ${categoryId} duplicate — retry ${attempt}`)
         continue
       }
-      console.log(`[CRON] ✓ "${article.title_en.slice(0, 60)}"`)
+      console.log(`[CRON] ✅ ${categoryId}: "${article.title_en.slice(0,60)}"`)
       return article
     } catch (err) {
-      console.error(`[CRON] ✗ Attempt ${attempt}: ${err.message}`)
-      if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 1000))
+      console.error(`[CRON] ✗ ${categoryId} attempt ${attempt}: ${err.message?.slice(0,80)}`)
     }
   }
+  console.log(`[CRON] ⛔ ${categoryId}: skipped`)
   return null
 }
 
 async function runGeneration() {
   const admin = supabaseAdmin()
-  const uniqueArticles = []
 
-  for (const cat of CATEGORIES) {
-    try {
-      console.log(`[CRON] Generating ${cat.label}...`)
-      const article = await generateUniqueArticle(cat.id, admin, 3)
-      if (article) {
-        uniqueArticles.push(article)
-        console.log(`[CRON] ✅ ${cat.label}: "${article.title_en.slice(0, 60)}"`)
-      } else {
-        console.log(`[CRON] ⛔ ${cat.label}: skipped`)
-      }
-    } catch (err) {
-      console.error(`[CRON] ✗ ${cat.id}: ${err.message}`)
-    }
-  }
+  // ── Run ALL 6 categories in PARALLEL — finishes in ~60s not 300s ──
+  console.log('[CRON] Starting all 6 categories in parallel...')
+  const results = await Promise.allSettled(
+    CATEGORIES.map(cat => generateForCategory(cat.id, admin))
+  )
+
+  const uniqueArticles = results
+    .filter(r => r.status === 'fulfilled' && r.value !== null)
+    .map(r => r.value)
+
+  console.log(`[CRON] Generated ${uniqueArticles.length}/6 articles`)
 
   if (uniqueArticles.length === 0) {
-    console.log('[CRON] No articles generated')
+    console.log('[CRON] No articles to save')
     return
   }
 
@@ -79,18 +74,18 @@ async function runGeneration() {
     .select('id, slug, title_en, category')
 
   if (error) { console.error('[CRON] DB error:', error.message); return }
+  console.log(`[CRON] ✅ Saved ${data.length} articles to DB`)
 
-  console.log(`[CRON] ✅ Saved ${data.length}/6 articles to DB`)
-
+  // Tweet each article
   for (let i = 0; i < data.length; i++) {
     const a = { ...uniqueArticles[i], ...data[i] }
     try {
       await postTweet(`${a.title_en} 🌍 https://pulse-africa.vercel.app/article/${a.slug} #Africa #News`)
-      console.log(`[Twitter] ✓ ${a.title_en?.slice(0, 40)}`)
+      console.log(`[Twitter] ✓ ${a.title_en?.slice(0,40)}`)
     } catch (err) {
-      console.log(`[Twitter] ✗ ${err.message}`)
+      console.log(`[Twitter] ✗ ${err.message?.slice(0,60)}`)
     }
-    if (i < data.length - 1) await new Promise(r => setTimeout(r, 3000))
+    if (i < data.length - 1) await new Promise(r => setTimeout(r, 2000))
   }
 }
 
@@ -99,12 +94,6 @@ export async function GET(request) {
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
   waitUntil(runGeneration())
-
-  return Response.json({
-    success: true,
-    message: 'Generation started — articles saving to DB',
-    timestamp: new Date().toISOString(),
-  })
+  return Response.json({ success: true, message: 'Generation started in parallel', timestamp: new Date().toISOString() })
 }

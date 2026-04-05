@@ -421,7 +421,7 @@ async function callGroq(prompt) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model:           'llama-3.1-8b-instant',
+      model:           'llama-3.3-70b-versatile',
       messages:        [{ role: 'user', content: prompt }],
       max_tokens:      2500,
       temperature:     0.2,
