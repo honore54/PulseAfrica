@@ -28,8 +28,7 @@ export default function RootLayout({ children }) {
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5287640072959856"
           crossOrigin="anonymous"
         />
-
-        {/* Adsterra Native Banner script — loads quietly */}
+        {/* Adsterra Native Banner Script */}
         <script
           async
           data-cfasync="false"
@@ -51,10 +50,10 @@ export default function RootLayout({ children }) {
           `}
         </Script>
 
-        {/* Adsterra Banner scripts — load after page */}
+        {/* Adsterra Banner Scripts - load after page */}
         <Script id="adsterra-300x250" strategy="lazyOnload">
           {`
-            atOptions = {
+            window.adsterra_300x250 = {
               'key' : '88a98201e929bca18285796130de047d',
               'format' : 'iframe',
               'height' : 250,
@@ -63,14 +62,9 @@ export default function RootLayout({ children }) {
             };
           `}
         </Script>
-        <Script
-          src="https://www.highperformanceformat.com/88a98201e929bca18285796130de047d/invoke.js"
-          strategy="lazyOnload"
-        />
-
         <Script id="adsterra-320x50" strategy="lazyOnload">
           {`
-            atOptions = {
+            window.adsterra_320x50 = {
               'key' : '5dab8a6165ad6f6c7573b276bf447626',
               'format' : 'iframe',
               'height' : 50,
@@ -79,10 +73,6 @@ export default function RootLayout({ children }) {
             };
           `}
         </Script>
-        <Script
-          src="https://www.highperformanceformat.com/5dab8a6165ad6f6c7573b276bf447626/invoke.js"
-          strategy="lazyOnload"
-        />
 
         {/* Heaven atmospheric lights */}
         <div className="heaven" aria-hidden="true">
@@ -94,31 +84,6 @@ export default function RootLayout({ children }) {
         </div>
 
         {children}
-
-        {/* Adsterra Native Banner — bottom of page, after content */}
-        <div
-          id="container-6504f9b6647c3fbed07e1e8d57f0d892"
-          style={{
-            textAlign: 'center',
-            margin: '20px auto',
-            maxWidth: '100%',
-            overflow: 'hidden'
-          }}
-        />
-
-        {/* Adsterra 320x50 mobile sticky bottom */}
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '320px',
-          height: '50px',
-          zIndex: 999,
-          display: 'block',
-        }}>
-        </div>
-
         <CookieBanner />
       </body>
     </html>

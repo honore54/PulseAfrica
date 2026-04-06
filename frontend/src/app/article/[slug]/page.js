@@ -10,7 +10,7 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 const CAT_META = {
-  politics:      { color:'var(--ruby)',    light:'var(--ruby5)',    label:'Politics',      emoji:'��️' },
+  politics:      { color:'var(--ruby)',    light:'var(--ruby5)',    label:'Politics',      emoji:'🏛️' },
   sports:        { color:'var(--jade)',    light:'var(--jade5)',    label:'Sports',        emoji:'⚽' },
   entertainment: { color:'var(--violet)',  light:'var(--violet4)', label:'Entertainment', emoji:'🎬' },
   africa:        { color:'var(--copper2)', light:'var(--copper5)', label:'Africa',        emoji:'🌍' },
@@ -27,18 +27,23 @@ const AUTHOR_META = {
   'chidi-eze':     { name:'Chidi Eze',     title:'Investigations & Analysis',       avatar:'CE' },
 }
 
-function renderContent(text = '') {
-  if (!text) return ''
-  return text
-    .split('\n')
-    .map(line => {
-      if (line.startsWith('## ')) return `<h2>${line.slice(3)}</h2>`
-      if (line.startsWith('### ')) return `<h3>${line.slice(4)}</h3>`
-      if (line.startsWith('> ')) return `<blockquote>${line.slice(2)}</blockquote>`
-      if (line.trim()) return `<p>${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</p>`
-      return ''
-    })
-    .join('')
+function renderContent(text = '', catColor = 'var(--ruby)') {
+  if (!text) return { top: '', bottom: '' }
+
+  const lines = text.split('\n').map(line => {
+    if (line.startsWith('## ')) return `<h2>${line.slice(3)}</h2>`
+    if (line.startsWith('### ')) return `<h3>${line.slice(4)}</h3>`
+    if (line.startsWith('> ')) return `<blockquote>${line.slice(2)}</blockquote>`
+    if (line.trim()) return `<p>${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</p>`
+    return ''
+  })
+
+  // Split content in half — ad goes in the middle
+  const mid = Math.floor(lines.length / 2)
+  return {
+    top:    lines.slice(0, mid).join(''),
+    bottom: lines.slice(mid).join(''),
+  }
 }
 
 export async function generateMetadata({ params, searchParams }) {
@@ -58,17 +63,10 @@ export async function generateMetadata({ params, searchParams }) {
   const summary = article[`summary_${t}`] || article.summary_en || ''
   const cat = CAT_META[article.category] || CAT_META.africa
   const author = AUTHOR_META[article.author_id] || null
-
-  // ── FIXED: canonical always points to base URL without lang param ──
   const canonicalUrl = `https://pulse-africa.vercel.app/article/${slug}`
   const ogUrl = `https://pulse-africa.vercel.app/article/${slug}${lang !== 'en' ? `?lang=${lang}` : ''}`
-
   const image = article.image_url || 'https://pulse-africa.vercel.app/og-default.jpg'
-  const keywords = [
-    ...(article.tags || []),
-    cat.label, 'Africa', 'African News', 'PulseAfrica',
-    article.location || '',
-  ].filter(Boolean).join(', ')
+  const keywords = [...(article.tags || []), cat.label, 'Africa', 'African News', 'PulseAfrica', article.location || ''].filter(Boolean).join(', ')
 
   return {
     title: `${title} | PulseAfrica`,
@@ -76,7 +74,6 @@ export async function generateMetadata({ params, searchParams }) {
     keywords,
     authors: [{ name: author ? author.name : 'PulseAfrica Editorial Team' }],
     metadataBase: new URL('https://pulse-africa.vercel.app'),
-    // ── FIXED: canonical is always the clean URL without ?lang ──
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -126,6 +123,7 @@ export default async function ArticlePage({ params, searchParams }) {
   const content = article[`content_${t}`] || article.content_en || ''
   const cat = CAT_META[article.category] || CAT_META.africa
   const author = AUTHOR_META[article.author_id] || null
+  const { top: contentTop, bottom: contentBottom } = renderContent(content, cat.color)
 
   let relatedByTags = []
   let relatedByCat = []
@@ -139,9 +137,7 @@ export default async function ArticlePage({ params, searchParams }) {
         .overlaps('tags', article.tags)
         .order('published_at', { ascending: false })
         .limit(3)
-      relatedByTags = (data || []).map(a => ({
-        ...a, title: a[`title_${t}`] || '', summary: a[`summary_${t}`] || '',
-      }))
+      relatedByTags = (data || []).map(a => ({ ...a, title: a[`title_${t}`] || '', summary: a[`summary_${t}`] || '' }))
     }
 
     const excludeSlugs = [slug, ...relatedByTags.map(a => a.slug)]
@@ -152,9 +148,7 @@ export default async function ArticlePage({ params, searchParams }) {
       .not('slug', 'in', `(${excludeSlugs.map(s => `"${s}"`).join(',')})`)
       .order('published_at', { ascending: false })
       .limit(2)
-    relatedByCat = (data || []).map(a => ({
-      ...a, title: a[`title_${t}`] || '', summary: a[`summary_${t}`] || '',
-    }))
+    relatedByCat = (data || []).map(a => ({ ...a, title: a[`title_${t}`] || '', summary: a[`summary_${t}`] || '' }))
   } catch {}
 
   const allRelated = [...relatedByTags, ...relatedByCat].slice(0, 5)
@@ -167,23 +161,28 @@ export default async function ArticlePage({ params, searchParams }) {
 
       <article style={{ maxWidth:780, margin:'0 auto', padding:'48px 40px 80px', position:'relative', zIndex:10 }}>
 
+        {/* Breadcrumb */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:28, fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2 }}>
           <Link href="/" style={{ color:'var(--ink7)', textDecoration:'none' }}>HOME</Link>
           <span>·</span>
           <Link href={`/category/${article.category}`} style={{ color:cat.color, textDecoration:'none' }}>{cat.label.toUpperCase()}</Link>
         </div>
 
+        {/* Category chip */}
         <div style={{ marginBottom:16 }}>
           <span className={`chip chip-${article.category}`}>{cat.emoji} {cat.label.toUpperCase()}</span>
         </div>
 
+        {/* Headline */}
         <h1 style={{ fontFamily:"'Cormorant',serif", fontWeight:400, fontSize:'clamp(32px,5vw,58px)', lineHeight:1.05, color:'var(--ink)', letterSpacing:-1, marginBottom:20 }}>{title}</h1>
 
+        {/* Summary */}
         {summary && (
           <p style={{ fontSize:18, color:'var(--ink4)', lineHeight:1.7, fontWeight:300, marginBottom:28, fontStyle:'italic', borderLeft:`3px solid ${cat.color}`, paddingLeft:18 }}>{summary}</p>
         )}
 
-        <div className="article-meta" style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20, paddingBottom:20, borderBottom:'1px solid var(--lace)', flexWrap:'wrap' }}>
+        {/* Meta row */}
+        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20, paddingBottom:20, borderBottom:'1px solid var(--lace)', flexWrap:'wrap' }}>
           <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5 }}>
             {new Date(article.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}
           </span>
@@ -205,15 +204,10 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         </div>
 
-        {/* ── Author byline + Editorial review badge ── */}
+        {/* Author byline */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12, marginBottom:32, padding:'16px 20px', background:'var(--pearl)', borderRadius:12, border:'1px solid var(--lace)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{
-              width:40, height:40, borderRadius:'50%',
-              background: cat.color, color:'#fff',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, flexShrink:0,
-            }}>
+            <div style={{ width:40, height:40, borderRadius:'50%', background:cat.color, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, flexShrink:0 }}>
               {author ? author.avatar : 'PA'}
             </div>
             <div>
@@ -231,6 +225,7 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         </div>
 
+        {/* Hero image */}
         {article.image_url && (
           <div style={{ borderRadius:16, overflow:'hidden', marginBottom:36, boxShadow:'var(--sh3)', position:'relative' }}>
             <ArticleImage src={article.image_url} alt={title} category={article.category} />
@@ -238,24 +233,38 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         )}
 
-        <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
-          dangerouslySetInnerHTML={{ __html: renderContent(content) }} />
+        {/* ── AD POSITION 1: After image, before content ── */}
+        {/* Native banner — blends naturally like sponsored content */}
+        <AdBanner size="native" label={true} />
 
+        {/* Article content — TOP HALF */}
+        <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
+          dangerouslySetInnerHTML={{ __html: contentTop }} />
+
+        {/* ── AD POSITION 2: Mid-article 300x250 ── */}
+        {/* Floated right like NYT/BBC do */}
+        <div style={{ float:'right', margin:'0 0 24px 32px', clear:'right' }}>
+          <AdBanner size="rectangle" label={true} />
+        </div>
+
+        {/* Article content — BOTTOM HALF */}
+        <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
+          dangerouslySetInnerHTML={{ __html: contentBottom }} />
+
+        <div style={{ clear:'both' }} />
+
+        {/* Related reading in middle */}
         {bottomRelated.length > 0 && (
           <div style={{ margin:'40px 0', padding:'24px', background:'var(--pearl)', borderRadius:16, border:'1px solid var(--lace)' }}>
             <p style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:2, marginBottom:16 }}>RELATED READING</p>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {bottomRelated.map(a => (
-                <Link key={a.id} href={`/article/${a.slug}?lang=${lang}`} style={{
-                  display:'flex', gap:12, textDecoration:'none', color:'inherit',
-                  padding:'12px', borderRadius:10, background:'var(--pure)',
-                  border:'1px solid var(--lace)', transition:'all .2s',
-                }}>
+                <Link key={a.id} href={`/article/${a.slug}?lang=${lang}`} style={{ display:'flex', gap:12, textDecoration:'none', color:'inherit', padding:'12px', borderRadius:10, background:'var(--pure)', border:'1px solid var(--lace)' }}>
                   {a.image_url && (
                     <img src={a.image_url} alt={a.title} style={{ width:72, height:54, objectFit:'cover', borderRadius:8, flexShrink:0 }} />
                   )}
                   <div>
-                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color: CAT_META[a.category]?.color, letterSpacing:1.5, textTransform:'uppercase' }}>
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:CAT_META[a.category]?.color, letterSpacing:1.5, textTransform:'uppercase' }}>
                       {CAT_META[a.category]?.emoji} {CAT_META[a.category]?.label}
                     </span>
                     <p style={{ fontFamily:"'Cormorant',serif", fontSize:15, fontWeight:500, color:'var(--ink)', lineHeight:1.3, marginTop:4 }}>{a.title}</p>
@@ -266,6 +275,7 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         )}
 
+        {/* Tags */}
         {article.tags?.length > 0 && (
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:40, paddingTop:24, borderTop:'1px solid var(--lace)' }}>
             {article.tags.map(tag => (
@@ -274,6 +284,7 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         )}
 
+        {/* Sources */}
         <div style={{ marginTop:40, paddingTop:24, borderTop:'1px solid var(--lace)' }}>
           <p style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:'var(--ink7)', letterSpacing:1.5, marginBottom:8 }}>SOURCES & REFERENCES</p>
           <p style={{ fontSize:13, color:'var(--ink6)', lineHeight:1.8 }}>
@@ -284,29 +295,29 @@ export default async function ArticlePage({ params, searchParams }) {
           </p>
         </div>
 
-        <div style={{ marginTop:32 }}><AdBanner size="rectangle" /></div>
+        {/* ── AD POSITION 3: End of article ── */}
+        <div style={{ marginTop:40, textAlign:'center' }}>
+          <AdBanner size="rectangle" label={true} />
+        </div>
+
       </article>
 
+      {/* Mobile sticky bottom ad */}
+      <AdBanner size="mobile" label={false} />
+
+      {/* Related articles grid */}
       {topRelated.length > 0 && (
-        <div className="related-grid" style={{ maxWidth:1380, margin:'0 auto', padding:'0 40px 80px', position:'relative', zIndex:10 }}>
+        <div style={{ maxWidth:1380, margin:'0 auto', padding:'0 40px 80px', position:'relative', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:24 }}>
             <div style={{ flex:1, height:1, background:'linear-gradient(90deg,var(--silk),transparent)' }} />
-            <div style={{ fontFamily:"'Cormorant',serif", fontSize:13, fontStyle:'italic', color:'var(--ink6)', letterSpacing:4 }}>
-              You May Also Like
-            </div>
+            <div style={{ fontFamily:"'Cormorant',serif", fontSize:13, fontStyle:'italic', color:'var(--ink6)', letterSpacing:4 }}>You May Also Like</div>
             <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,var(--silk))' }} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
             {topRelated.map(a => <ArticleCard key={a.id} article={a} lang={lang} />)}
           </div>
           <div style={{ textAlign:'center', marginTop:32 }}>
-            <Link href={`/category/${article.category}?lang=${lang}`} style={{
-              display:'inline-flex', alignItems:'center', gap:8,
-              padding:'10px 24px', borderRadius:100,
-              border:'1px solid var(--lace)', background:'var(--pearl)',
-              fontFamily:"'Space Mono',monospace", fontSize:10, color:'var(--ink5)',
-              textDecoration:'none', letterSpacing:1.5, transition:'all .2s',
-            }}>
+            <Link href={`/category/${article.category}?lang=${lang}`} style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'10px 24px', borderRadius:100, border:'1px solid var(--lace)', background:'var(--pearl)', fontFamily:"'Space Mono',monospace", fontSize:10, color:'var(--ink5)', textDecoration:'none', letterSpacing:1.5 }}>
               MORE {cat.label.toUpperCase()} NEWS →
             </Link>
           </div>
@@ -321,6 +332,10 @@ export default async function ArticlePage({ params, searchParams }) {
         article p  { margin-bottom:20px; }
         article blockquote { border-left:3px solid ${cat.color}; padding:12px 20px; margin:24px 0; background:${cat.light}; border-radius:0 8px 8px 0; font-style:italic; color:var(--ink3); }
         article strong { font-weight:600; color:var(--ink); }
+        @media (max-width: 600px) {
+          article { padding: 24px 20px 100px !important; }
+          div[style*="float:right"] { float: none !important; margin: 0 auto 24px !important; }
+        }
       `}</style>
     </>
   )
