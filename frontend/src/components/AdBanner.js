@@ -1,8 +1,36 @@
 'use client'
+import { useEffect, useRef } from 'react'
+
+function AdUnit({ adKey, width, height }) {
+  const ref = useRef(null)
+  const loaded = useRef(false)
+
+  useEffect(() => {
+    if (loaded.current || !ref.current) return
+    loaded.current = true
+
+    // Set options then load script
+    window.atOptions = {
+      'key': adKey,
+      'format': 'iframe',
+      'height': height,
+      'width': width,
+      'params': {}
+    }
+
+    const script = document.createElement('script')
+    script.type = 'text/javascript'
+    script.async = true
+    script.src = `https://www.highperformanceformat.com/${adKey}/invoke.js`
+    ref.current.appendChild(script)
+  }, [adKey, width, height])
+
+  return <div ref={ref} style={{ width, height, maxWidth: '100%' }} />
+}
 
 export default function AdBanner({ size = 'rectangle', label = true }) {
 
-  // ── 728x90 Leaderboard — homepage & category pages ──────
+  // ── Leaderboard 728x90 — homepage & category pages ──────
   if (size === 'leaderboard') {
     return (
       <div style={{
@@ -10,7 +38,7 @@ export default function AdBanner({ size = 'rectangle', label = true }) {
         flexDirection: 'column',
         alignItems: 'center',
         margin: '32px auto',
-        maxWidth: 728,
+        maxWidth: '100%',
       }}>
         {label && (
           <p style={{
@@ -23,35 +51,23 @@ export default function AdBanner({ size = 'rectangle', label = true }) {
           }}>Advertisement</p>
         )}
         <div style={{
-          width: 728,
-          height: 90,
           borderRadius: 8,
           overflow: 'hidden',
           border: '1px solid var(--lace)',
           background: 'var(--pearl)',
           maxWidth: '100%',
         }}>
-          <script dangerouslySetInnerHTML={{ __html: `
-            (function() {
-              var atOptions = {
-                'key': '88a98201e929bca18285796130de047d',
-                'format': 'iframe',
-                'height': 90,
-                'width': 728,
-                'params': {}
-              };
-              var d = document, s = d.createElement('script');
-              s.type = 'text/javascript'; s.async = true;
-              s.src = 'https://www.highperformanceformat.com/88a98201e929bca18285796130de047d/invoke.js';
-              d.head.appendChild(s);
-            })();
-          `}} />
+          <AdUnit
+            adKey="88a98201e929bca18285796130de047d"
+            width={728}
+            height={90}
+          />
         </div>
       </div>
     )
   }
 
-  // ── 300x250 Rectangle — sidebar & mid-article ────────────
+  // ── Rectangle 300x250 — sidebar & article ────────────────
   if (size === 'rectangle') {
     return (
       <div style={{
@@ -79,21 +95,11 @@ export default function AdBanner({ size = 'rectangle', label = true }) {
           border: '1px solid var(--lace)',
           background: 'var(--pearl)',
         }}>
-          <script dangerouslySetInnerHTML={{ __html: `
-            (function() {
-              var atOptions = {
-                'key': '88a98201e929bca18285796130de047d',
-                'format': 'iframe',
-                'height': 250,
-                'width': 300,
-                'params': {}
-              };
-              var d = document, s = d.createElement('script');
-              s.type = 'text/javascript'; s.async = true;
-              s.src = 'https://www.highperformanceformat.com/88a98201e929bca18285796130de047d/invoke.js';
-              d.head.appendChild(s);
-            })();
-          `}} />
+          <AdUnit
+            adKey="88a98201e929bca18285796130de047d"
+            width={300}
+            height={250}
+          />
         </div>
       </div>
     )
@@ -127,7 +133,7 @@ export default function AdBanner({ size = 'rectangle', label = true }) {
     )
   }
 
-  // ── 320x50 Mobile sticky bottom ──────────────────────────
+  // ── Mobile 320x50 sticky bottom ──────────────────────────
   if (size === 'mobile') {
     return (
       <div style={{
@@ -144,21 +150,11 @@ export default function AdBanner({ size = 'rectangle', label = true }) {
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        <script dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            var atOptions = {
-              'key': '5dab8a6165ad6f6c7573b276bf447626',
-              'format': 'iframe',
-              'height': 50,
-              'width': 320,
-              'params': {}
-            };
-            var d = document, s = d.createElement('script');
-            s.type = 'text/javascript'; s.async = true;
-            s.src = 'https://www.highperformanceformat.com/5dab8a6165ad6f6c7573b276bf447626/invoke.js';
-            d.head.appendChild(s);
-          })();
-        `}} />
+        <AdUnit
+          adKey="5dab8a6165ad6f6c7573b276bf447626"
+          width={320}
+          height={50}
+        />
       </div>
     )
   }
