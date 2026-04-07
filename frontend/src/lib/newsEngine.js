@@ -104,17 +104,8 @@ const NEWSDATA_CATEGORY_MAP = {
 }
 
 const NEWSDATA_COUNTRIES = {
-  politics:      'ng,za,ke',
-  sports:        'ng,za,ke',
-  entertainment: 'ng,gh,za',
-  africa:        'ng,ke,za',
-  technology:    'ng,ke,gh',
-  business:      'ng,za,ke',
-}
-
-const GNEWS_TOPIC_MAP = {
-  politics: 'nation', sports: 'sports', entertainment: 'entertainment',
-  technology: 'technology', business: 'business', africa: 'nation',
+  politics: 'ng,za,ke', sports: 'ng,za,ke', entertainment: 'ng,gh,za',
+  africa: 'ng,ke,za',   technology: 'ng,ke,gh', business: 'ng,za,ke',
 }
 
 const IMAGE_QUERY_EXAMPLES = {
@@ -137,9 +128,7 @@ function isDuplicate(title) {
   const norm = normalizeTitle(title)
   const now  = Date.now()
   const TTL  = 24 * 60 * 60 * 1000
-  for (const [k, ts] of _seenTitles) {
-    if (now - ts > TTL) _seenTitles.delete(k)
-  }
+  for (const [k, ts] of _seenTitles) { if (now - ts > TTL) _seenTitles.delete(k) }
   if (_seenTitles.has(norm)) return true
   const wordsA = norm.split(' ').filter(w => w.length > 3)
   for (const [k] of _seenTitles) {
@@ -161,22 +150,7 @@ function pickBest(articles) {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-
-// ── Sensitive content filter ─────────────────────────────
-const SENSITIVE_KEYWORDS = [
-  'homosexual','homosexuality','gay','lesbian','lgbt','lgbtq',
-  'transgender','sexual orientation','same-sex','porn','prostitut',
-  'rape','sexual assault','pedophil','child abuse','terrorist',
-  'genocide','ethnic cleansing','suicide bomb','beheading',
-]
-
-function isSensitive(article) {
-  const text = [article.title, article.description, article.content]
-    .join(' ').toLowerCase()
-  const match = SENSITIVE_KEYWORDS.find(kw => text.includes(kw))
-  if (match) console.log(`[Filter] ⚠️ Sensitive content blocked: "${match}" in "${article.title}"`)
-  return !!match
-}
+const delay = ms => new Promise(r => setTimeout(r, ms))
 
 async function gnewsSearch(query, maxDays = 30) {
   const res = await fetch(
@@ -188,18 +162,16 @@ async function gnewsSearch(query, maxDays = 30) {
   const data = await res.json()
   return (data.articles || []).filter(a => {
     const age = (Date.now() - new Date(a.publishedAt).getTime()) / 86400000
-    return age <= maxDays && !isDuplicate(a.title) && !isSensitive(a)
+    return age <= maxDays && !isDuplicate(a.title)
   })
 }
 
 function formatGnews(a) {
   return {
-    title:       a.title       || '',
-    description: a.description || '',
-    content:     a.content     || a.description || '',
-    source:      a.source?.name || 'African News',
-    url:         a.url          || '',
-    publishedAt: a.publishedAt  || new Date().toISOString(),
+    title: a.title || '', description: a.description || '',
+    content: a.content || a.description || '',
+    source: a.source?.name || 'African News',
+    url: a.url || '', publishedAt: a.publishedAt || new Date().toISOString(),
   }
 }
 
@@ -207,24 +179,20 @@ async function newsdataSearch(query, category) {
   if (!NEWSDATA_KEY) throw new Error('NEWSDATA_KEY not set')
   const cat     = NEWSDATA_CATEGORY_MAP[category] || 'world'
   const country = NEWSDATA_COUNTRIES[category]    || 'ng,ke,za'
-  const url = `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY}&q=${encodeURIComponent(query)}&language=en&category=${cat}&country=${country}`
-  const res = await fetch(url, { next: { revalidate: 900 } })
+  const res = await fetch(
+    `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY}&q=${encodeURIComponent(query)}&language=en&category=${cat}&country=${country}`,
+    { next: { revalidate: 900 } }
+  )
   if (res.status === 429) throw new Error('NEWSDATA_RATE_LIMITED')
-  if (res.status === 422) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(`NewsData 422: ${JSON.stringify(body?.results?.message || body)}`)
-  }
-  if (!res.ok) throw new Error(`NewsData HTTP ${res.status}`)
+  if (!res.ok) throw new Error(`NewsData ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title) && !isSensitive(a))
+    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title))
     .map(a => ({
-      title:       a.title,
-      description: a.description || '',
-      content:     a.content     || a.description || '',
-      source:      a.source_id   || 'African News',
-      url:         a.link        || '',
-      publishedAt: a.pubDate     || new Date().toISOString(),
+      title: a.title, description: a.description || '',
+      content: a.content || a.description || '',
+      source: a.source_id || 'African News',
+      url: a.link || '', publishedAt: a.pubDate || new Date().toISOString(),
     }))
 }
 
@@ -232,124 +200,58 @@ async function newsdataLatest(category) {
   if (!NEWSDATA_KEY) throw new Error('NEWSDATA_KEY not set')
   const cat     = NEWSDATA_CATEGORY_MAP[category] || 'world'
   const country = NEWSDATA_COUNTRIES[category]    || 'ng,ke,za'
-  const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&language=en&category=${cat}&country=${country}`
-  const res = await fetch(url, { next: { revalidate: 900 } })
+  const res = await fetch(
+    `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&language=en&category=${cat}&country=${country}`,
+    { next: { revalidate: 900 } }
+  )
   if (res.status === 429) throw new Error('NEWSDATA_RATE_LIMITED')
-  if (res.status === 422) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(`NewsData latest 422: ${JSON.stringify(body?.results?.message || body)}`)
-  }
-  if (!res.ok) throw new Error(`NewsData latest HTTP ${res.status}`)
+  if (!res.ok) throw new Error(`NewsData latest ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && !isDuplicate(a.title) && !isSensitive(a))
+    .filter(a => a.title && !isDuplicate(a.title))
     .map(a => ({
-      title:       a.title,
-      description: a.description || '',
-      content:     a.content     || a.description || '',
-      source:      a.source_id   || 'African News',
-      url:         a.link        || '',
-      publishedAt: a.pubDate     || new Date().toISOString(),
+      title: a.title, description: a.description || '',
+      content: a.content || a.description || '',
+      source: a.source_id || 'African News',
+      url: a.link || '', publishedAt: a.pubDate || new Date().toISOString(),
     }))
-}
-
-async function groqWebFallback(category) {
-  console.log(`[Groq fallback:${category}] Using Groq knowledge as final safety net...`)
-  const country = pickCountry()
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{
-        role: 'user',
-        content: `You are a news research assistant. Provide ONE real verified news story about ${category} in Africa from 2025 or 2026.
-
-RULES:
-- Only write about events you are confident actually happened
-- Include the real source name (BBC, Reuters, Al Jazeera, CNN, etc.)
-- Do not invent quotes or statistics
-- Country focus: ${country}
-- Return ONLY this JSON:
-
-{
-  "title": "Real news headline",
-  "description": "2-sentence factual summary",
-  "content": "3-4 paragraph factual account. No invented quotes.",
-  "source": "BBC Africa / Reuters / Al Jazeera / etc.",
-  "url": "",
-  "publishedAt": "2026-01-01T00:00:00Z"
-}`
-      }],
-      max_tokens: 800,
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
-    }),
-  })
-  const json = await res.json()
-  if (json.error) throw new Error(`Groq fallback: ${json.error.message}`)
-  const text = json.choices?.[0]?.message?.content || ''
-  if (!text) throw new Error('Groq fallback empty')
-  const parsed = JSON.parse(text)
-  if (!parsed.title || parsed.title.length < 10) throw new Error('Groq fallback invalid title')
-  if (isDuplicate(parsed.title)) throw new Error('Groq fallback duplicate')
-  console.log(`[Groq fallback:${category}] ✓ "${parsed.title}"`)
-  return parsed
 }
 
 export async function fetchRealArticle(category) {
   const pool = [...(GNEWS_QUERIES[category] || [])].sort(() => Math.random() - 0.5)
-  let gnewsQuotaExhausted = false
+  let gnewsDead = false
 
-  // Stage 1: GNews — only 2 queries to conserve quota
-  if (GNEWS_KEY && !gnewsQuotaExhausted) {
+  if (GNEWS_KEY) {
     for (const query of pool.slice(0, 2)) {
       try {
-        console.log(`[GNews:${category}] "${query}"`)
         const articles = await gnewsSearch(query)
-        const pick     = pickBest(articles)
+        const pick = pickBest(articles)
         if (pick) { console.log(`[GNews:${category}] ✓ "${pick.title}"`); return formatGnews(pick) }
       } catch (err) {
-        if (err.message === 'GNEWS_QUOTA_EXCEEDED') {
-          console.warn(`[GNews] Quota exceeded — switching to NewsData`)
-          gnewsQuotaExhausted = true
-          break
-        }
-        console.warn(`[GNews:${category}] "${query}": ${err.message}`)
+        if (err.message === 'GNEWS_QUOTA_EXCEEDED') { gnewsDead = true; break }
+        console.warn(`[GNews:${category}] ${err.message}`)
       }
     }
   }
 
-  // Stage 2: NewsData search
   if (NEWSDATA_KEY) {
     for (const query of pool.slice(0, 3)) {
       try {
-        console.log(`[NewsData:${category}] "${query}"`)
         const results = await newsdataSearch(query, category)
-        const pick    = pickBest(results)
+        const pick = pickBest(results)
         if (pick) { console.log(`[NewsData:${category}] ✓ "${pick.title}"`); return pick }
       } catch (err) {
-        if (err.message === 'NEWSDATA_RATE_LIMITED') { console.warn(`[NewsData] Rate limited`); break }
-        console.warn(`[NewsData:${category}] "${query}": ${err.message}`)
+        if (err.message === 'NEWSDATA_RATE_LIMITED') break
+        console.warn(`[NewsData:${category}] ${err.message}`)
       }
     }
-
-    // Stage 3: NewsData latest
     try {
-      console.log(`[NewsData:${category}] Trying latest...`)
       const results = await newsdataLatest(category)
-      const pick    = pickBest(results)
+      const pick = pickBest(results)
       if (pick) { console.log(`[NewsData:${category}] ✓ Latest: "${pick.title}"`); return pick }
     } catch (err) {
       console.warn(`[NewsData:${category}] Latest: ${err.message}`)
     }
-  }
-
-  // Stage 4: Groq knowledge fallback
-  try {
-    return await groqWebFallback(category)
-  } catch (err) {
-    console.warn(`[Groq fallback:${category}] ${err.message}`)
   }
 
   throw new Error(`All sources exhausted for "${category}"`)
@@ -365,99 +267,139 @@ function safeParseJSON(text) {
   return JSON.parse(c)
 }
 
-const WRITING_STYLE = {
-  sports:        'Write with the energy of BBC Sport Africa. Lead with the athlete or competition name.',
-  entertainment: 'Write with the vibrancy of Billboard Africa or OkayAfrica. Connect to Afrobeats/Amapiano culture.',
-  politics:      'Write with the authority of Al Jazeera Africa. Focus on policy impact for citizens.',
-  technology:    'Write with the insight of TechCabal. Highlight African tech ecosystem growth.',
-  business:      'Write with the precision of Bloomberg Africa. Lead with the economic figure.',
-  africa:        'Write with the depth of The Africa Report. Connect the story to continental development.',
-}
-
-const JSON_SCHEMA = `{
-  "title_en":    "SEO headline max 80 chars — lead with primary keyword",
-  "title_fr":    "Titre français max 80 chars — écrit nativement",
-  "title_rw":    "Umutwe Kinyarwanda max 80 chars — wanditswe neza",
-  "summary_en":  "2 punchy sentences max 200 chars — hook the reader immediately",
-  "summary_fr":  "Résumé 2 phrases max 200 caractères",
-  "summary_rw":  "Incamake interuro 2 max 200 inyuguti",
-  "content_en":  "400-450 words. ## 2-3 subheadings. ONLY facts from the source article.",
-  "content_fr":  "300-340 mots. ## sous-titres. Mêmes faits uniquement.",
-  "content_rw":  "230-270 amagambo. ## inshuti. Ibintu bya nyayo gusa.",
-  "tags":        ["entity","entity","country","category","africa"],
-  "read_time":   4,
-  "location":    "City, Country",
-  "image_query": "4-5 word Unsplash landscape query for this specific story",
-  "seo_title":   "55-60 chars — primary keyword first, for Google ranking",
-  "seo_desc":    "150-155 chars — compelling, includes primary keyword"
-}`
-
+// ════════════════════════════════════════════════════════════════
+// PROMPT — 1000+ words, full SEO, People Also Ask, human voice
+// Cron safe: uses max_tokens 2800, temperature 0.65
+// ════════════════════════════════════════════════════════════════
 function buildPrompt(category, realArticle) {
   const catLabel = CATEGORIES.find(c => c.id === category)?.label || category
-  return `You are a senior ${catLabel} journalist at PulseAfrica, Africa's leading trilingual news platform.
 
-REAL SOURCE ARTICLE:
-Source: ${realArticle.source} (published ${realArticle.publishedAt})
-Title: ${realArticle.title}
-Description: ${realArticle.description}
-Content: ${realArticle.content}
+  return `You are a senior ${catLabel} journalist at PulseAfrica — Africa's independent trilingual news platform. You have 15 years of experience writing for international African audiences.
 
-WRITING STYLE: ${WRITING_STYLE[category] || 'Write with professional journalistic authority.'}
+SOURCE EVENT:
+Headline: ${realArticle.title}
+Summary: ${realArticle.description}
+Details: ${(realArticle.content || '').slice(0, 700)}
+Source: ${realArticle.source} — ${realArticle.publishedAt}
 
-ABSOLUTE RULES:
-1. Use ONLY facts from the source article — never invent quotes, scores, statistics or names
-2. Do NOT add knowledge not present in the article above
-3. Each language (EN/FR/RW) must feel natively written, not machine-translated
-4. title_en must start with the primary keyword (name, country, event, company)
-5. seo_title must be exactly 55-60 characters
-6. tags: exactly 5 specific lowercase tags
-7. Return ONLY valid JSON — no preamble, no markdown fences
+ARTICLE STRUCTURE REQUIRED:
+Your article must follow this exact structure for maximum Google SEO ranking:
 
-${JSON_SCHEMA}`
+1. TITLE — keyword-focused, active verb, max 80 chars
+2. INTRODUCTION (150 words) — open with a scene or striking fact, include primary keyword naturally in first 100 words, hook the reader immediately
+3. ## Background and Context (200 words) — why this story matters, historical context, what led to this moment
+4. ## Key Developments (200 words) — the core facts of what happened, specific details and numbers
+5. ## Impact on Africa (200 words) — what this means for ordinary Africans, regional implications, who benefits or suffers
+6. ## Expert Perspective and Analysis (150 words) — deeper analytical insight, what experts and observers are saying
+7. ## What Happens Next (100 words) — what to watch for, timeline, future implications
+8. ## People Also Ask — 3 questions people search about this topic, each with a 40-word direct answer
+
+WRITING RULES — follow every single one:
+- Mix SHORT sentences (under 10 words) with LONG ones (25+ words) — vary constantly
+- Never start 3 consecutive sentences with the same word
+- Use specific names, places, numbers — never vague generalities
+- Write conversationally — "But here is what matters most" is fine
+- Show genuine knowledge of Africa — add context a foreign journalist would miss
+- NEVER use: "In conclusion", "It is worth noting", "This development", "Delve into", "Navigate", "Shed light on", "Robust", "Furthermore", "Moreover"
+- End every section with a sentence that makes the reader want to read the next section
+- Total length: 1000-1100 words in English
+
+MULTILINGUAL RULES:
+- French: Write as a French journalist — analytical, formal but engaging, not a translation
+- Kinyarwanda: Write for East African readers — connect to regional context
+
+Return ONLY valid JSON:
+{
+  "title_en": "Active keyword headline max 80 chars",
+  "title_fr": "Titre actif max 80 chars — style journal français",
+  "title_rw": "Umutwe ukurura max 80 chars — Kinyarwanda nyakuri",
+  "summary_en": "2 sentences that stop a reader scrolling — 150-200 chars",
+  "summary_fr": "2 phrases accrocheuses — 150-200 caractères",
+  "summary_rw": "Interuro 2 zikurura — 150-200 inyuguti",
+  "content_en": "1000-1100 words. Intro + ## Background and Context + ## Key Developments + ## Impact on Africa + ## Expert Perspective and Analysis + ## What Happens Next + ## People Also Ask (3 Q&As)",
+  "content_fr": "700-800 mots. Même structure ## que EN. Style journalistique français.",
+  "content_rw": "500-600 amagambo. Inzira imwe na EN. Kinyarwanda nyakuri.",
+  "tags": ["primary_keyword", "country", "specific_topic", "category_tag", "africa"],
+  "read_time": 5,
+  "location": "Specific City, Country",
+  "image_query": "5 specific words describing ideal photo for this story",
+  "seo_title": "55-60 chars — primary keyword first",
+  "seo_desc": "150-155 chars — specific, compelling, keyword included"
+}`
 }
 
-async function callGroq(prompt) {
+// ════════════════════════════════════════════════════════════════
+// GROQ — optimized for quality + cron safety
+// max_tokens: 2800 (enough for 1000 words without burning TPM)
+// temperature: 0.65 (natural writing, not robotic, not random)
+// ════════════════════════════════════════════════════════════════
+async function callGroq(prompt, retryCount = 0) {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
       model:           'llama-3.3-70b-versatile',
       messages:        [{ role: 'user', content: prompt }],
-      max_tokens:      2500,
-      temperature:     0.2,
+      max_tokens:      2800,
+      temperature:     0.65,
       response_format: { type: 'json_object' },
     }),
   })
+
   const json = await res.json()
+
+  if (res.status === 429 || json.error?.message?.includes('Rate limit')) {
+    if (retryCount >= 2) throw new Error('Groq rate limit exceeded')
+    const match  = json.error?.message?.match(/try again in ([\d.]+)s/)
+    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 1000 : 35000
+    console.warn(`[Groq] Rate limited — waiting ${Math.ceil(waitMs/1000)}s...`)
+    await delay(waitMs)
+    return callGroq(prompt, retryCount + 1)
+  }
+
   if (json.error) throw new Error(`Groq: ${json.error.message}`)
   const text = json.choices?.[0]?.message?.content || ''
   if (!text) throw new Error('Groq returned empty response')
   return text
 }
 
-export async function generateArticle(category, maxRetries = 3) {
+export async function generateArticle(category, maxRetries = 2) {
   let lastError
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`[Engine] ${category.toUpperCase()} — attempt ${attempt}/${maxRetries}`)
+      console.log(`[Engine] ${category.toUpperCase()} attempt ${attempt}`)
+
       const realArticle = await fetchRealArticle(category)
-      const prompt      = buildPrompt(category, realArticle)
-      const rawText     = await callGroq(prompt)
+      const rawText     = await callGroq(buildPrompt(category, realArticle))
       const parsed      = safeParseJSON(rawText)
+
       for (const f of ['title_en','content_en','summary_en','title_fr','title_rw','seo_title','seo_desc']) {
         if (!parsed[f] || String(parsed[f]).length < 10) throw new Error(`Empty field: "${f}"`)
       }
-      if (isDuplicate(parsed.title_en)) throw new Error(`Duplicate: "${parsed.title_en.slice(0,60)}"`)
+
+      // Minimum length check — 1500 chars ≈ 1000 words
+      if (parsed.content_en.length < 1500) {
+        throw new Error(`Too short: ${parsed.content_en.length} chars — need 1500+`)
+      }
+
+      if (isDuplicate(parsed.title_en)) throw new Error(`Duplicate: "${parsed.title_en.slice(0,50)}"`)
       markSeen(parsed.title_en)
-      const imageUrl = await fetchUnsplashImage(parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category)
-      const slug     = slugify(parsed.title_en, { lower: true, strict: true }).slice(0, 80) + '-' + Date.now().toString(36)
-      console.log(`[Engine] ✓ ${category}: "${parsed.title_en.slice(0, 65)}"`)
+
+      const imageUrl = await fetchUnsplashImage(
+        parsed.image_query || IMAGE_QUERY_EXAMPLES[category], category
+      )
+      const slug = slugify(parsed.title_en, { lower: true, strict: true }).slice(0, 80)
+        + '-' + Date.now().toString(36)
+
+      console.log(`[Engine] ✓ ${category}: "${parsed.title_en.slice(0,65)}" (${parsed.content_en.length} chars)`)
+
       return {
         slug, category,
         image_url:    imageUrl,
         published_at: new Date().toISOString(),
-        views: 0,
-        read_time:    parsed.read_time || 4,
+        views:        0,
+        read_time:    parsed.read_time || 5,
         location:     parsed.location  || 'Africa',
         tags:         Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5) : [],
         seo_title:    parsed.seo_title,
@@ -469,31 +411,31 @@ export async function generateArticle(category, maxRetries = 3) {
         content_en: parsed.content_en, content_fr: parsed.content_fr, content_rw: parsed.content_rw,
         author_id:  getAuthorForCategory(category).id,
       }
+
     } catch (err) {
       lastError = err
       console.warn(`[Engine] ✗ ${category} attempt ${attempt}: ${err.message}`)
-      if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 12000))
+      if (attempt < maxRetries) await delay(2000)
     }
   }
-  throw new Error(`${category} failed all ${maxRetries} attempts — ${lastError?.message}`)
+
+  throw new Error(`${category} failed — ${lastError?.message}`)
 }
 
 export async function generateAllCategories() {
-  console.log(`\n[Engine] SESSION ${new Date().toISOString()}`)
-  console.log(`[Engine] GNews=${GNEWS_KEY?'✓':'MISSING'}  NewsData=${NEWSDATA_KEY?'✓':'MISSING'}  Groq=${GROQ_KEY?'✓':'MISSING'}`)
-  const results  = []
-  const failures = []
+  console.log(`[Engine] SESSION ${new Date().toISOString()}`)
+  const results = [], failures = []
+
   for (const cat of CATEGORIES) {
     try {
-      results.push(await generateArticle(cat.id, 3))
+      results.push(await generateArticle(cat.id, 2))
     } catch (err) {
-      console.error(`[Engine] PERMANENT FAIL ${cat.id}: ${err.message}`)
+      console.error(`[Engine] FAIL ${cat.id}: ${err.message}`)
       failures.push({ category: cat.id, error: err.message })
     }
-    if (results.length + failures.length < CATEGORIES.length) {
-      await new Promise(r => setTimeout(r, 15000))
-    }
+    await delay(2000)
   }
+
   console.log(`[Engine] ${results.length}/6 articles, ${failures.length} failed`)
   if (failures.length) failures.forEach(f => console.error(`  • ${f.category}: ${f.error}`))
   if (results.length === 0) throw new Error('Zero articles — check API keys')
