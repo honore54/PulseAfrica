@@ -219,7 +219,6 @@ async function newsdataLatest(category) {
 
 export async function fetchRealArticle(category) {
   const pool = [...(GNEWS_QUERIES[category] || [])].sort(() => Math.random() - 0.5)
-  let gnewsDead = false
 
   if (GNEWS_KEY) {
     for (const query of pool.slice(0, 2)) {
@@ -228,7 +227,7 @@ export async function fetchRealArticle(category) {
         const pick = pickBest(articles)
         if (pick) { console.log(`[GNews:${category}] ✓ "${pick.title}"`); return formatGnews(pick) }
       } catch (err) {
-        if (err.message === 'GNEWS_QUOTA_EXCEEDED') { gnewsDead = true; break }
+        if (err.message === 'GNEWS_QUOTA_EXCEEDED') break
         console.warn(`[GNews:${category}] ${err.message}`)
       }
     }
@@ -268,70 +267,55 @@ function safeParseJSON(text) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// PROMPT — 1000+ words, full SEO, People Also Ask, human voice
-// Cron safe: uses max_tokens 2800, temperature 0.65
+// PROMPT — SEO optimized, human voice, fits in 1800 tokens
+// Key: shorter source input + compact JSON schema = no JSON failures
 // ════════════════════════════════════════════════════════════════
 function buildPrompt(category, realArticle) {
   const catLabel = CATEGORIES.find(c => c.id === category)?.label || category
 
-  return `You are a senior ${catLabel} journalist at PulseAfrica — Africa's independent trilingual news platform. You have 15 years of experience writing for international African audiences.
+  const voices = {
+    politics:      'Al Jazeera Africa — authoritative, balanced, focused on citizen impact',
+    sports:        'BBC Sport Africa — passionate, energetic, dramatic storytelling',
+    entertainment: 'OkayAfrica — vibrant, culturally sharp, celebratory',
+    africa:        'The Africa Report — thoughtful, pan-African, solution-aware',
+    technology:    'TechCabal — optimistic, specific, insider knowledge',
+    business:      'Bloomberg Africa — precise, data-driven, investor-aware',
+  }
 
-SOURCE EVENT:
-Headline: ${realArticle.title}
+  return `You are a senior ${catLabel} journalist at PulseAfrica. Write a high-quality SEO news article.
+
+SOURCE:
+Title: ${realArticle.title}
 Summary: ${realArticle.description}
-Details: ${(realArticle.content || '').slice(0, 700)}
-Source: ${realArticle.source} — ${realArticle.publishedAt}
+Details: ${(realArticle.content || '').slice(0, 500)}
+Source: ${realArticle.source}
 
-ARTICLE STRUCTURE REQUIRED:
-Your article must follow this exact structure for maximum Google SEO ranking:
+VOICE: ${voices[category] || 'Professional African news journalism'}
 
-1. TITLE — keyword-focused, active verb, max 80 chars
-2. INTRODUCTION (150 words) — open with a scene or striking fact, include primary keyword naturally in first 100 words, hook the reader immediately
-3. ## Background and Context (200 words) — why this story matters, historical context, what led to this moment
-4. ## Key Developments (200 words) — the core facts of what happened, specific details and numbers
-5. ## Impact on Africa (200 words) — what this means for ordinary Africans, regional implications, who benefits or suffers
-6. ## Expert Perspective and Analysis (150 words) — deeper analytical insight, what experts and observers are saying
-7. ## What Happens Next (100 words) — what to watch for, timeline, future implications
-8. ## People Also Ask — 3 questions people search about this topic, each with a 40-word direct answer
+ARTICLE STRUCTURE (follow exactly):
+- Intro paragraph: 80 words, hook + primary keyword naturally included
+- ## Background and Context: 120 words — why this matters, history
+- ## Key Developments: 120 words — core facts, specific details
+- ## Impact on Africa: 120 words — effect on ordinary Africans
+- ## Analysis: 100 words — deeper insight and implications
+- ## What Happens Next: 60 words — what to watch for
+- ## People Also Ask: 3 questions readers search + 30-word answers each
 
-WRITING RULES — follow every single one:
-- Mix SHORT sentences (under 10 words) with LONG ones (25+ words) — vary constantly
-- Never start 3 consecutive sentences with the same word
-- Use specific names, places, numbers — never vague generalities
-- Write conversationally — "But here is what matters most" is fine
-- Show genuine knowledge of Africa — add context a foreign journalist would miss
-- NEVER use: "In conclusion", "It is worth noting", "This development", "Delve into", "Navigate", "Shed light on", "Robust", "Furthermore", "Moreover"
-- End every section with a sentence that makes the reader want to read the next section
-- Total length: 1000-1100 words in English
+WRITING RULES:
+- Mix short sentences (under 8 words) with longer ones (20+ words)
+- Use specific names, places, numbers — never vague
+- Natural conversational phrases are fine: "But here is the thing"
+- NEVER write: "In conclusion", "It is worth noting", "This development", "Delve into", "Furthermore", "Moreover", "Robust", "Shed light on"
+- Total: 700-750 words English (enough for AdSense, fits in token limit)
 
-MULTILINGUAL RULES:
-- French: Write as a French journalist — analytical, formal but engaging, not a translation
-- Kinyarwanda: Write for East African readers — connect to regional context
-
-Return ONLY valid JSON:
-{
-  "title_en": "Active keyword headline max 80 chars",
-  "title_fr": "Titre actif max 80 chars — style journal français",
-  "title_rw": "Umutwe ukurura max 80 chars — Kinyarwanda nyakuri",
-  "summary_en": "2 sentences that stop a reader scrolling — 150-200 chars",
-  "summary_fr": "2 phrases accrocheuses — 150-200 caractères",
-  "summary_rw": "Interuro 2 zikurura — 150-200 inyuguti",
-  "content_en": "1000-1100 words. Intro + ## Background and Context + ## Key Developments + ## Impact on Africa + ## Expert Perspective and Analysis + ## What Happens Next + ## People Also Ask (3 Q&As)",
-  "content_fr": "700-800 mots. Même structure ## que EN. Style journalistique français.",
-  "content_rw": "500-600 amagambo. Inzira imwe na EN. Kinyarwanda nyakuri.",
-  "tags": ["primary_keyword", "country", "specific_topic", "category_tag", "africa"],
-  "read_time": 5,
-  "location": "Specific City, Country",
-  "image_query": "5 specific words describing ideal photo for this story",
-  "seo_title": "55-60 chars — primary keyword first",
-  "seo_desc": "150-155 chars — specific, compelling, keyword included"
-}`
+Return ONLY this compact JSON (no extra spaces):
+{"title_en":"keyword-first headline max 75 chars","title_fr":"titre français max 75 chars","title_rw":"umutwe kinyarwanda max 75 chars","summary_en":"2 hook sentences max 180 chars","summary_fr":"2 phrases accrocheuses max 180 chars","summary_rw":"interuro 2 max 180 inyuguti","content_en":"700-750 word article with ## headings and ## People Also Ask section","content_fr":"500-550 mots meme structure ##","content_rw":"350-400 amagambo inzira imwe na EN","tags":["keyword","country","topic","category","africa"],"read_time":4,"location":"City, Country","image_query":"5 word specific photo query","seo_title":"55-60 chars keyword first","seo_desc":"150-155 chars compelling with keyword"}`
 }
 
 // ════════════════════════════════════════════════════════════════
-// GROQ — optimized for quality + cron safety
-// max_tokens: 2800 (enough for 1000 words without burning TPM)
-// temperature: 0.65 (natural writing, not robotic, not random)
+// GROQ — 1800 max_tokens = fits TPM limit with 6 categories
+// 6 × 1800 = 10,800 tokens < 12,000 TPM limit ✅
+// temperature 0.6 = natural writing, stable JSON output
 // ════════════════════════════════════════════════════════════════
 async function callGroq(prompt, retryCount = 0) {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -340,8 +324,8 @@ async function callGroq(prompt, retryCount = 0) {
     body: JSON.stringify({
       model:           'llama-3.3-70b-versatile',
       messages:        [{ role: 'user', content: prompt }],
-      max_tokens:      2800,
-      temperature:     0.65,
+      max_tokens:      1800,  // 6 × 1800 = 10,800 < 12,000 TPM ✅
+      temperature:     0.6,   // Stable JSON + natural writing
       response_format: { type: 'json_object' },
     }),
   })
@@ -349,17 +333,18 @@ async function callGroq(prompt, retryCount = 0) {
   const json = await res.json()
 
   if (res.status === 429 || json.error?.message?.includes('Rate limit')) {
-    if (retryCount >= 2) throw new Error('Groq rate limit exceeded')
+    if (retryCount >= 1) throw new Error('Groq rate limit exceeded')
+    // Wait EXACTLY what Groq says, not a fixed 35s
     const match  = json.error?.message?.match(/try again in ([\d.]+)s/)
-    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 1000 : 35000
-    console.warn(`[Groq] Rate limited — waiting ${Math.ceil(waitMs/1000)}s...`)
+    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 500 : 8000
+    console.warn(`[Groq] Rate limited — waiting ${Math.ceil(waitMs/1000)}s`)
     await delay(waitMs)
     return callGroq(prompt, retryCount + 1)
   }
 
   if (json.error) throw new Error(`Groq: ${json.error.message}`)
   const text = json.choices?.[0]?.message?.content || ''
-  if (!text) throw new Error('Groq returned empty response')
+  if (!text) throw new Error('Groq empty response')
   return text
 }
 
@@ -369,18 +354,16 @@ export async function generateArticle(category, maxRetries = 2) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[Engine] ${category.toUpperCase()} attempt ${attempt}`)
-
       const realArticle = await fetchRealArticle(category)
       const rawText     = await callGroq(buildPrompt(category, realArticle))
       const parsed      = safeParseJSON(rawText)
 
       for (const f of ['title_en','content_en','summary_en','title_fr','title_rw','seo_title','seo_desc']) {
-        if (!parsed[f] || String(parsed[f]).length < 10) throw new Error(`Empty field: "${f}"`)
+        if (!parsed[f] || String(parsed[f]).length < 10) throw new Error(`Empty: ${f}`)
       }
 
-      // Minimum length check — 1500 chars ≈ 1000 words
-      if (parsed.content_en.length < 1500) {
-        throw new Error(`Too short: ${parsed.content_en.length} chars — need 1500+`)
+      if (parsed.content_en.length < 1200) {
+        throw new Error(`Too short: ${parsed.content_en.length} chars`)
       }
 
       if (isDuplicate(parsed.title_en)) throw new Error(`Duplicate: "${parsed.title_en.slice(0,50)}"`)
@@ -392,14 +375,14 @@ export async function generateArticle(category, maxRetries = 2) {
       const slug = slugify(parsed.title_en, { lower: true, strict: true }).slice(0, 80)
         + '-' + Date.now().toString(36)
 
-      console.log(`[Engine] ✓ ${category}: "${parsed.title_en.slice(0,65)}" (${parsed.content_en.length} chars)`)
+      console.log(`[Engine] ✓ ${category}: "${parsed.title_en.slice(0,60)}" (${parsed.content_en.length}c)`)
 
       return {
         slug, category,
         image_url:    imageUrl,
         published_at: new Date().toISOString(),
         views:        0,
-        read_time:    parsed.read_time || 5,
+        read_time:    parsed.read_time || 4,
         location:     parsed.location  || 'Africa',
         tags:         Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5) : [],
         seo_title:    parsed.seo_title,
@@ -415,7 +398,7 @@ export async function generateArticle(category, maxRetries = 2) {
     } catch (err) {
       lastError = err
       console.warn(`[Engine] ✗ ${category} attempt ${attempt}: ${err.message}`)
-      if (attempt < maxRetries) await delay(2000)
+      if (attempt < maxRetries) await delay(3000)
     }
   }
 
@@ -433,7 +416,8 @@ export async function generateAllCategories() {
       console.error(`[Engine] FAIL ${cat.id}: ${err.message}`)
       failures.push({ category: cat.id, error: err.message })
     }
-    await delay(2000)
+    // 5s gap between categories = TPM bucket refills between calls
+    await delay(5000)
   }
 
   console.log(`[Engine] ${results.length}/6 articles, ${failures.length} failed`)
