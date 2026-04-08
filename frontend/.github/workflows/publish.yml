@@ -1,0 +1,83 @@
+name: PulseAfrica Auto Publish
+
+on:
+  schedule:
+    # Session 1 — Midnight CAT (UTC-2)
+    - cron: '0 22 * * *'   # Politics    (midnight CAT)
+    - cron: '30 22 * * *'  # Sports
+    - cron: '0 23 * * *'   # Entertainment
+    - cron: '30 23 * * *'  # Africa
+    - cron: '0 0 * * *'    # Technology
+    - cron: '30 0 * * *'   # Business
+    # Session 2 — Noon CAT
+    - cron: '0 10 * * *'   # Politics
+    - cron: '30 10 * * *'  # Sports
+    - cron: '0 11 * * *'   # Entertainment
+    - cron: '30 11 * * *'  # Africa
+    - cron: '0 12 * * *'   # Technology
+    - cron: '30 12 * * *'  # Business
+    # Session 3 — 6pm CAT
+    - cron: '0 16 * * *'   # Politics
+    - cron: '30 16 * * *'  # Sports
+    - cron: '0 17 * * *'   # Entertainment
+    - cron: '30 17 * * *'  # Africa
+    - cron: '0 18 * * *'   # Technology
+    - cron: '30 18 * * *'  # Business
+  workflow_dispatch:        # Manual trigger
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger PulseAfrica Cron
+        run: |
+          # Determine which category based on current time
+          MINUTE=$(date +%M)
+          HOUR=$(date +%H)
+          
+          if [ "$MINUTE" = "00" ]; then
+            case $HOUR in
+              22) CAT="politics" ;;
+              23) CAT="entertainment" ;;
+              00) CAT="technology" ;;
+              10) CAT="politics" ;;
+              11) CAT="entertainment" ;;
+              12) CAT="technology" ;;
+              16) CAT="politics" ;;
+              17) CAT="entertainment" ;;
+              18) CAT="technology" ;;
+              *) CAT="politics" ;;
+            esac
+          else
+            case $HOUR in
+              22) CAT="sports" ;;
+              23) CAT="africa" ;;
+              00) CAT="business" ;;
+              10) CAT="sports" ;;
+              11) CAT="africa" ;;
+              12) CAT="business" ;;
+              16) CAT="sports" ;;
+              17) CAT="africa" ;;
+              18) CAT="business" ;;
+              *) CAT="sports" ;;
+            esac
+          fi
+          
+          echo "Triggering category: $CAT"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 120 \
+            "https://pulse-africa.vercel.app/api/cron?cat=$CAT")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "Response: $BODY"
+          echo "HTTP Code: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
