@@ -324,7 +324,7 @@ async function callGroq(prompt, retryCount = 0) {
     body: JSON.stringify({
       model:           'llama-3.3-70b-versatile',
       messages:        [{ role: 'user', content: prompt }],
-      max_tokens:      1800,  // 6 × 1800 = 10,800 < 12,000 TPM ✅
+      max_tokens:      1500,  // 6 × 1800 = 10,800 < 12,000 TPM ✅
       temperature:     0.6,   // Stable JSON + natural writing
       response_format: { type: 'json_object' },
     }),
@@ -417,7 +417,7 @@ export async function generateAllCategories() {
       failures.push({ category: cat.id, error: err.message })
     }
     // 5s gap between categories = TPM bucket refills between calls
-    await delay(5000)
+    await delay(8000)
   }
 
   console.log(`[Engine] ${results.length}/6 articles, ${failures.length} failed`)
