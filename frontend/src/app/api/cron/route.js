@@ -2,7 +2,7 @@ import { generateArticle, CATEGORIES } from '@/lib/newsEngine'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 55
+export const maxDuration = 300
 
 export async function GET(request) {
   const authHeader = request.headers.get('authorization')
