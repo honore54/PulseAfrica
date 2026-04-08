@@ -1,0 +1,69 @@
+name: PulseAfrica Auto Publish
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+    - cron: '30 22 * * *'
+    - cron: '0 23 * * *'
+    - cron: '30 23 * * *'
+    - cron: '0 0 * * *'
+    - cron: '30 0 * * *'
+    - cron: '0 10 * * *'
+    - cron: '30 10 * * *'
+    - cron: '0 11 * * *'
+    - cron: '30 11 * * *'
+    - cron: '0 12 * * *'
+    - cron: '30 12 * * *'
+    - cron: '0 16 * * *'
+    - cron: '30 16 * * *'
+    - cron: '0 17 * * *'
+    - cron: '30 17 * * *'
+    - cron: '0 18 * * *'
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Determine category and trigger article generation
+        run: |
+          MINUTE=$(date +%M)
+          HOUR=$(date +%H)
+          echo "Current time UTC: $HOUR:$MINUTE"
+
+          declare -A HOUR_CAT_00=(
+            [22]="politics" [23]="entertainment" [0]="technology"
+            [10]="politics" [11]="entertainment" [12]="technology"
+            [16]="politics" [17]="entertainment" [18]="technology"
+          )
+          declare -A HOUR_CAT_30=(
+            [22]="sports" [23]="africa" [0]="business"
+            [10]="sports" [11]="africa" [12]="business"
+            [16]="sports" [17]="africa" [18]="business"
+          )
+
+          if [ "$MINUTE" = "00" ]; then
+            CAT="${HOUR_CAT_00[$HOUR]:-politics}"
+          else
+            CAT="${HOUR_CAT_30[$HOUR]:-sports}"
+          fi
+
+          echo "Triggering category: $CAT"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 120 \
+            "https://pulse-africa.vercel.app/api/cron?cat=$CAT")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
