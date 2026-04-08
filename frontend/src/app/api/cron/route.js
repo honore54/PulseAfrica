@@ -3,7 +3,7 @@ import { generateArticle, CATEGORIES } from '@/lib/newsEngine'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 300
+export const maxDuration = 60
 
 const delay = ms => new Promise(r => setTimeout(r, ms))
 
@@ -19,7 +19,7 @@ async function generateForCategory(categoryId, admin) {
         .limit(1)
 
       if (existing?.length > 0) {
-        console.log(`[CRON] ✗ ${categoryId} duplicate — retry ${attempt}`)
+        console.log(`[CRON] ✗ duplicate — retry ${attempt}`)
         continue
       }
 
@@ -27,51 +27,59 @@ async function generateForCategory(categoryId, admin) {
       return article
 
     } catch (err) {
-      console.error(`[CRON] ✗ ${categoryId} attempt ${attempt}: ${err.message?.slice(0, 80)}`)
+      console.error(`[CRON] ✗ attempt ${attempt}: ${err.message?.slice(0, 100)}`)
       if (attempt < 2) await delay(3000)
     }
   }
-  console.log(`[CRON] ⛔ ${categoryId}: skipped`)
   return null
 }
 
-async function runGeneration() {
+async function runSingle(categoryId) {
   const admin = supabaseAdmin()
-  const uniqueArticles = []
 
-  console.log('[CRON] Sequential generation starting...')
+  console.log(`[CRON] Generating single category: ${categoryId}`)
 
-  // ── PURELY SEQUENTIAL — one category at a time ──────────
-  // Each category finishes completely before next one starts
-  // This prevents ALL Groq TPM collisions
-  for (const cat of CATEGORIES) {
-    try {
-      console.log(`[CRON] Generating ${cat.label}...`)
-      const article = await generateForCategory(cat.id, admin)
-      if (article) uniqueArticles.push(article)
-    } catch (err) {
-      console.error(`[CRON] ✗ ${cat.id}: ${err.message}`)
-    }
-    // 8s gap between categories — TPM bucket fully refills
-    await delay(8000)
-  }
+  const article = await generateForCategory(categoryId, admin)
 
-  console.log(`[CRON] Generated ${uniqueArticles.length}/6 articles`)
-
-  if (uniqueArticles.length === 0) {
-    console.log('[CRON] No articles generated')
+  if (!article) {
+    console.log(`[CRON] ✗ Failed to generate ${categoryId}`)
     return
   }
 
   const { data, error } = await admin
     .from('articles')
-    .insert(uniqueArticles)
+    .insert([article])
     .select('id, slug, title_en, category')
 
   if (error) { console.error('[CRON] DB error:', error.message); return }
 
-  console.log(`[CRON] ✅ Saved ${data.length}/6 to DB`)
-  data.forEach(a => console.log(`  • ${a.category}: ${a.title_en?.slice(0, 60)}`))
+  console.log(`[CRON] ✅ Saved: ${data[0]?.title_en?.slice(0, 60)}`)
+}
+
+async function runAll() {
+  const admin = supabaseAdmin()
+  const results = []
+
+  for (const cat of CATEGORIES) {
+    try {
+      const article = await generateForCategory(cat.id, admin)
+      if (article) results.push(article)
+    } catch (err) {
+      console.error(`[CRON] ✗ ${cat.id}: ${err.message}`)
+    }
+    await delay(3000)
+  }
+
+  if (results.length === 0) return
+
+  const { data, error } = await admin
+    .from('articles')
+    .insert(results)
+    .select('id, slug, title_en, category')
+
+  if (error) { console.error('[CRON] DB error:', error.message); return }
+  console.log(`[CRON] ✅ Saved ${data.length}/6 articles`)
+  data.forEach(a => console.log(`  • ${a.category}: ${a.title_en?.slice(0, 50)}`))
 }
 
 export async function GET(request) {
@@ -79,10 +87,32 @@ export async function GET(request) {
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  waitUntil(runGeneration())
+
+  // Check if specific category requested
+  const url = new URL(request.url)
+  const cat = url.searchParams.get('cat')
+
+  if (cat) {
+    // Single category mode — used by the 6 separate cron jobs
+    const valid = CATEGORIES.find(c => c.id === cat)
+    if (!valid) {
+      return Response.json({ error: `Unknown category: ${cat}` }, { status: 400 })
+    }
+    console.log(`[CRON] Single category mode: ${cat}`)
+    waitUntil(runSingle(cat))
+    return Response.json({
+      success: true,
+      message: `Generating ${cat} article`,
+      timestamp: new Date().toISOString(),
+    })
+  }
+
+  // All categories mode — fallback for manual runs
+  console.log(`[CRON] All categories mode`)
+  waitUntil(runAll())
   return Response.json({
     success: true,
-    message: 'Sequential generation started',
+    message: 'Generating all categories',
     timestamp: new Date().toISOString(),
   })
 }
