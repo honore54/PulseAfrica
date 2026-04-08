@@ -333,10 +333,10 @@ async function callGroq(prompt, retryCount = 0) {
   const json = await res.json()
 
   if (res.status === 429 || json.error?.message?.includes('Rate limit')) {
-    if (retryCount >= 1) throw new Error('Groq rate limit exceeded')
+    if (retryCount >= 2) throw new Error('Groq rate limit exceeded')
     // Wait EXACTLY what Groq says, not a fixed 35s
     const match  = json.error?.message?.match(/try again in ([\d.]+)s/)
-    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 500 : 8000
+    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 1000 : 40000
     console.warn(`[Groq] Rate limited — waiting ${Math.ceil(waitMs/1000)}s`)
     await delay(waitMs)
     return callGroq(prompt, retryCount + 1)
