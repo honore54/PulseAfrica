@@ -322,9 +322,9 @@ async function callGroq(prompt, retryCount = 0) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model:           'llama-3.3-70b-versatile',
+      model:           'llama-3.1-8b-instant',
       messages:        [{ role: 'user', content: prompt }],
-      max_tokens:      1500,  // 6 × 1800 = 10,800 < 12,000 TPM ✅
+      max_tokens:      2000,
       temperature:     0.6,   // Stable JSON + natural writing
       response_format: { type: 'json_object' },
     }),
@@ -336,7 +336,7 @@ async function callGroq(prompt, retryCount = 0) {
     if (retryCount >= 2) throw new Error('Groq rate limit exceeded')
     // Wait EXACTLY what Groq says, not a fixed 35s
     const match  = json.error?.message?.match(/try again in ([\d.]+)s/)
-    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 1000 : 40000
+    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 500 : 5000
     console.warn(`[Groq] Rate limited — waiting ${Math.ceil(waitMs/1000)}s`)
     await delay(waitMs)
     return callGroq(prompt, retryCount + 1)
