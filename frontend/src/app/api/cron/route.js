@@ -14,16 +14,16 @@ export async function GET(request) {
   const cat = url.searchParams.get('cat')
   const admin = supabaseAdmin()
 
-  // ── Single category mode ──────────────────────────────────
+  // ── Single category mode ──────────────────────────────
   if (cat) {
     const valid = CATEGORIES.find(c => c.id === cat)
     if (!valid) return Response.json({ error: `Unknown category: ${cat}` }, { status: 400 })
 
     console.log(`[CRON] Generating: ${cat}`)
 
-    // Only 2 attempts to stay within 55s timeout
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
+        console.log(`[CRON] Attempt ${attempt}/3`)
         const article = await generateArticle(cat)
         if (!article) continue
 
@@ -33,7 +33,7 @@ export async function GET(request) {
           .limit(1)
 
         if (existing?.length > 0) {
-          console.log(`[CRON] Duplicate — retrying`)
+          console.log(`[CRON] Duplicate — skipping`)
           continue
         }
 
@@ -44,7 +44,7 @@ export async function GET(request) {
 
         if (error) throw new Error(`DB: ${error.message}`)
 
-        console.log(`[CRON] ✅ "${data[0].title_en}"`)
+        console.log(`[CRON] ✅ Saved: "${data[0].title_en}"`)
         return Response.json({
           success: true,
           category: cat,
@@ -53,19 +53,22 @@ export async function GET(request) {
         })
 
       } catch (err) {
-        console.error(`[CRON] ✗ attempt ${attempt}: ${err.message?.slice(0, 120)}`)
+        console.error(`[CRON] ✗ attempt ${attempt}: ${err.message}`)
+        if (attempt < 3) await new Promise(r => setTimeout(r, 5000))
       }
     }
 
-    return Response.json({ success: false, category: cat, error: 'Failed' })
+    return Response.json({ success: false, category: cat, error: 'Failed after 3 attempts' })
   }
 
-  // ── All categories mode ───────────────────────────────────
+  // ── All 6 categories mode ─────────────────────────────
+  console.log(`[CRON] Generating all 6 categories`)
   const results = []
   const failures = []
 
   for (const c of CATEGORIES) {
     try {
+      console.log(`[CRON] → ${c.id}`)
       const article = await generateArticle(c.id)
       if (!article) { failures.push(c.id); continue }
 
@@ -74,27 +77,38 @@ export async function GET(request) {
         .ilike('title_en', `%${article.title_en.slice(0, 40)}%`)
         .limit(1)
 
-      if (existing?.length > 0) { failures.push(c.id); continue }
-      results.push(article)
+      if (existing?.length > 0) {
+        console.log(`[CRON] Duplicate: ${c.id}`)
+        failures.push(c.id)
+        continue
+      }
+
+      const { data, error } = await admin
+        .from('articles')
+        .insert([article])
+        .select('id, slug, title_en, category')
+
+      if (error) throw new Error(error.message)
+
+      console.log(`[CRON] ✅ ${c.id}: "${data[0].title_en.slice(0, 50)}"`)
+      results.push({ category: c.id, title: data[0].title_en })
+
+      // Wait 65s between categories for Groq TPM reset
+      if (c.id !== 'business') {
+        console.log(`[CRON] Waiting 65s for Groq TPM reset...`)
+        await new Promise(r => setTimeout(r, 65000))
+      }
+
     } catch (err) {
       console.error(`[CRON] ✗ ${c.id}: ${err.message}`)
       failures.push(c.id)
     }
   }
 
-  if (results.length === 0) {
-    return Response.json({ success: false, error: 'No articles generated', failures })
-  }
-
-  const { data, error } = await admin
-    .from('articles').insert(results).select('id, slug, title_en, category')
-
-  if (error) return Response.json({ success: false, error: error.message }, { status: 500 })
-
   return Response.json({
-    success: true,
-    generated: data.length,
-    categories: data.map(a => `${a.category}: ${a.title_en?.slice(0, 40)}`),
+    success: results.length > 0,
+    generated: results.length,
+    articles: results,
     failures,
   })
 }
