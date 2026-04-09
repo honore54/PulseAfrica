@@ -62,7 +62,7 @@ export async function fetchUnsplashImage(query, category) {
 const GNEWS_QUERIES = {
   politics: [
     'Africa election 2026','African Union summit','Africa government reform',
-    'Africa president parliament','South Africa Nigeria politics',
+    'Africa president parliament government policy','South Africa Nigeria politics',
     'Africa sanctions peace deal','African democracy','Africa foreign policy',
     'Africa security conflict','Africa regional summit',
   ],
