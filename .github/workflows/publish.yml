@@ -2,72 +2,34 @@ name: PulseAfrica Auto Publish
 
 on:
   schedule:
-    - cron: '0 22 * * *'   # Session 1 — midnight CAT
-    - cron: '0 8 * * *'    # Session 2 — 10 AM CAT
-    - cron: '0 16 * * *'   # Session 3 — 6 PM CAT
+    - cron: '0 22 * * *'   # Midnight CAT
+    - cron: '0 8 * * *'    # 10 AM CAT
+    - cron: '0 16 * * *'   # 6 PM CAT
   workflow_dispatch:
-    inputs:
-      session:
-        description: 'Which session to run'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - politics
-          - sports
-          - entertainment
-          - africa
-          - technology
-          - business
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Generate 6 articles sequentially
+      - name: Generate all 6 articles
         run: |
-          BASE_URL="https://pulse-africa.vercel.app/api/cron"
-          AUTH="Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-          DELAY=65
+          echo "Starting PulseAfrica session: $(date -u)"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 540 \
+            --connect-timeout 30 \
+            "https://pulse-africa.vercel.app/api/cron")
 
-          # If manual trigger with specific category
-          INPUT="${{ github.event.inputs.session }}"
-          if [ -n "$INPUT" ] && [ "$INPUT" != "all" ]; then
-            echo "=== Manual: $INPUT ==="
-            curl -s -H "$AUTH" --max-time 120 "$BASE_URL?cat=$INPUT"
-            exit 0
+          HTTP=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "HTTP Status: $HTTP"
+          echo "Response: $BODY"
+
+          if echo "$BODY" | grep -q '"success":true'; then
+            echo "✅ Session complete!"
+          else
+            echo "⚠️ Session had issues"
           fi
-
-          # Run all 6 categories sequentially with delay
-          CATEGORIES=("politics" "sports" "entertainment" "africa" "technology" "business")
-
-          for CAT in "${CATEGORIES[@]}"; do
-            echo ""
-            echo "=== Generating: $CAT ==="
-            RESPONSE=$(curl -s -w "\n%{http_code}" \
-              -H "$AUTH" \
-              --max-time 90 \
-              "$BASE_URL?cat=$CAT")
-
-            HTTP=$(echo "$RESPONSE" | tail -n1)
-            BODY=$(echo "$RESPONSE" | head -n-1)
-            echo "HTTP: $HTTP"
-            echo "Response: $BODY"
-
-            if echo "$BODY" | grep -q '"success":true'; then
-              echo "✅ $CAT — article saved!"
-            else
-              echo "⚠️  $CAT — failed, continuing..."
-            fi
-
-            # Wait 65s for Groq TPM to reset (except after last category)
-            if [ "$CAT" != "business" ]; then
-              echo "Waiting ${DELAY}s for Groq TPM reset..."
-              sleep $DELAY
-            fi
-          done
-
-          echo ""
-          echo "=== Session complete ==="
