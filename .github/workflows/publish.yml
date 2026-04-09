@@ -2,68 +2,72 @@ name: PulseAfrica Auto Publish
 
 on:
   schedule:
-    - cron: '0 22 * * *'
-    - cron: '30 22 * * *'
-    - cron: '0 23 * * *'
-    - cron: '30 23 * * *'
-    - cron: '0 0 * * *'
-    - cron: '30 0 * * *'
-    - cron: '0 10 * * *'
-    - cron: '30 10 * * *'
-    - cron: '0 11 * * *'
-    - cron: '30 11 * * *'
-    - cron: '0 12 * * *'
-    - cron: '30 12 * * *'
-    - cron: '0 16 * * *'
-    - cron: '30 16 * * *'
-    - cron: '0 17 * * *'
-    - cron: '30 17 * * *'
-    - cron: '0 18 * * *'
-    - cron: '30 18 * * *'
+    - cron: '0 22 * * *'   # Session 1 — midnight CAT
+    - cron: '0 8 * * *'    # Session 2 — 10 AM CAT
+    - cron: '0 16 * * *'   # Session 3 — 6 PM CAT
   workflow_dispatch:
+    inputs:
+      session:
+        description: 'Which session to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - politics
+          - sports
+          - entertainment
+          - africa
+          - technology
+          - business
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Determine category and trigger article generation
+      - name: Generate 6 articles sequentially
         run: |
-          MINUTE=$(date +%M)
-          HOUR=$(date +%H)
-          echo "Current time UTC: $HOUR:$MINUTE"
+          BASE_URL="https://pulse-africa.vercel.app/api/cron"
+          AUTH="Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          DELAY=65
 
-          declare -A HOUR_CAT_00=(
-            [22]="politics" [23]="entertainment" [0]="technology"
-            [10]="politics" [11]="entertainment" [12]="technology"
-            [16]="politics" [17]="entertainment" [18]="technology"
-          )
-          declare -A HOUR_CAT_30=(
-            [22]="sports" [23]="africa" [0]="business"
-            [10]="sports" [11]="africa" [12]="business"
-            [16]="sports" [17]="africa" [18]="business"
-          )
-
-          if [ "$MINUTE" = "00" ]; then
-            CAT="${HOUR_CAT_00[$HOUR]:-politics}"
-          else
-            CAT="${HOUR_CAT_30[$HOUR]:-sports}"
+          # If manual trigger with specific category
+          INPUT="${{ github.event.inputs.session }}"
+          if [ -n "$INPUT" ] && [ "$INPUT" != "all" ]; then
+            echo "=== Manual: $INPUT ==="
+            curl -s -H "$AUTH" --max-time 120 "$BASE_URL?cat=$INPUT"
+            exit 0
           fi
 
-          echo "Triggering category: $CAT"
+          # Run all 6 categories sequentially with delay
+          CATEGORIES=("politics" "sports" "entertainment" "africa" "technology" "business")
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 120 \
-            "https://pulse-africa.vercel.app/api/cron?cat=$CAT")
+          for CAT in "${CATEGORIES[@]}"; do
+            echo ""
+            echo "=== Generating: $CAT ==="
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -H "$AUTH" \
+              --max-time 90 \
+              "$BASE_URL?cat=$CAT")
 
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | head -n-1)
+            HTTP=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | head -n-1)
+            echo "HTTP: $HTTP"
+            echo "Response: $BODY"
 
-          echo "HTTP Code: $HTTP_CODE"
-          echo "Response: $BODY"
+            if echo "$BODY" | grep -q '"success":true'; then
+              echo "✅ $CAT — article saved!"
+            else
+              echo "⚠️  $CAT — failed, continuing..."
+            fi
 
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "Failed with HTTP $HTTP_CODE"
-            exit 1
-          fi
+            # Wait 65s for Groq TPM to reset (except after last category)
+            if [ "$CAT" != "business" ]; then
+              echo "Waiting ${DELAY}s for Groq TPM reset..."
+              sleep $DELAY
+            fi
+          done
+
+          echo ""
+          echo "=== Session complete ==="
