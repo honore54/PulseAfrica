@@ -43,20 +43,54 @@ export function getCategoryImage(category, index = null) {
 export async function fetchUnsplashImage(query, category) {
   const key = process.env.UNSPLASH_ACCESS_KEY
   if (!key) return getCategoryImage(category)
-  try {
-    const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + ' Africa')}&per_page=6&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${key}` }, next: { revalidate: 3600 } }
-    )
-    if (!res.ok) return getCategoryImage(category)
-    const data   = await res.json()
-    const photos = data.results || []
-    if (!photos.length) return getCategoryImage(category)
-    const photo = photos[Math.floor(Math.random() * Math.min(photos.length, 3))]
-    return photo.urls.regular + '&w=1200&h=675&fit=crop'
-  } catch {
-    return getCategoryImage(category)
+
+  // Smart query — use article-specific query first, then category fallback
+  const queries = [
+    query,                                    // Exact article query
+    `${query} africa`,                        // With Africa context
+    getCategoryFallbackQuery(category),       // Category-specific fallback
+  ]
+
+  for (const q of queries) {
+    try {
+      const res = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=15&orientation=landscape&order_by=relevant&content_filter=high`,
+        { headers: { Authorization: `Client-ID ${key}` }, next: { revalidate: 3600 } }
+      )
+      if (!res.ok) continue
+      const data   = await res.json()
+      const photos = (data.results || []).filter(p =>
+        p.width >= 1200 &&                    // High resolution only
+        p.likes > 5 &&                        // Popular = quality
+        !p.description?.toLowerCase().includes('logo') // No logos
+      )
+      if (!photos.length) continue
+
+      // Pick from top 5 most relevant
+      const pool  = photos.slice(0, 5)
+      const photo = pool[Math.floor(Math.random() * pool.length)]
+
+      console.log(`[Unsplash] ✓ "${q}" → ${photo.urls.regular.slice(0, 60)}`)
+      return `${photo.urls.regular}&w=1200&h=675&fit=crop&q=85&auto=format`
+    } catch {
+      continue
+    }
   }
+
+  console.log(`[Unsplash] Fallback to pool for ${category}`)
+  return getCategoryImage(category)
+}
+
+function getCategoryFallbackQuery(category) {
+  const fallbacks = {
+    politics:      'african parliament government leaders meeting',
+    sports:        'african football stadium crowd cheering',
+    entertainment: 'african music concert stage performance lights',
+    africa:        'africa city skyline modern development',
+    technology:    'africa tech startup laptop innovation',
+    business:      'africa business finance investment meeting',
+  }
+  return fallbacks[category] || 'africa modern city'
 }
 
 const GNEWS_QUERIES = {
