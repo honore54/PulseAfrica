@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
 import Footer from '@/components/Footer'
-import AdBanner from '@/components/AdBanner'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -78,7 +77,6 @@ export default async function CategoryPage({ params, searchParams }) {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
               {rest.map(a => <ArticleCard key={a.id} article={a} lang={lang} />)}
             </div>
-            <div style={{ marginTop:24 }}><AdBanner size="leaderboard" /></div>
           </>
         )}
       </div>

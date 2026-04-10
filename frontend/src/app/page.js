@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import Navbar from '@/components/Navbar'
 import ArticleCard, { ArticleRow, SkeletonCard } from '@/components/ArticleCard'
 import Footer from '@/components/Footer'
-import AdBanner from '@/components/AdBanner'
 
 const CATS = [
   { id:'politics',      emoji:'🏛️', color:'var(--ruby)',    light:'var(--ruby5)',    label:'Politics'      },
@@ -300,8 +299,6 @@ export default function HomePage() {
           )}
         </div>
 
-        <div style={{ marginTop:20 }}><AdBanner size="leaderboard" /></div>
-
         {tertiary.length > 0 && (
           <div className="grid-sec" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginTop:14 }}>
             {loading
@@ -360,7 +357,6 @@ export default function HomePage() {
                 ))
               : listItems.map(a => <ArticleRow key={a.id} article={a} lang={lang} />)
             }
-            <div style={{ marginTop:24 }}><AdBanner size="rectangle" /></div>
           </div>
 
           {/* Sidebar */}
@@ -422,8 +418,6 @@ export default function HomePage() {
                 )
               ))}
             </div>
-
-            <AdBanner size="rectangle" />
           </div>
         </div>
       </div>

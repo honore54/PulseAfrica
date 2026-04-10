@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
 import Footer from '@/components/Footer'
-import AdBanner from '@/components/AdBanner'
 import ArticleImage from '@/components/ArticleImage'
 import Link from 'next/link'
 
@@ -235,7 +234,6 @@ export default async function ArticlePage({ params, searchParams }) {
 
         {/* ── AD POSITION 1: After image, before content ── */}
         {/* Native banner — blends naturally like sponsored content */}
-        <AdBanner size="native" label={true} />
 
         {/* Article content — TOP HALF */}
         <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
@@ -243,9 +241,6 @@ export default async function ArticlePage({ params, searchParams }) {
 
         {/* ── AD POSITION 2: Mid-article 300x250 ── */}
         {/* Floated right like NYT/BBC do */}
-        <div style={{ float:'right', margin:'0 0 24px 32px', clear:'right' }}>
-          <AdBanner size="rectangle" label={true} />
-        </div>
 
         {/* Article content — BOTTOM HALF */}
         <div style={{ fontSize:17, lineHeight:1.85, color:'var(--ink3)', fontWeight:300 }}
@@ -296,14 +291,10 @@ export default async function ArticlePage({ params, searchParams }) {
         </div>
 
         {/* ── AD POSITION 3: End of article ── */}
-        <div style={{ marginTop:40, textAlign:'center' }}>
-          <AdBanner size="rectangle" label={true} />
-        </div>
 
       </article>
 
       {/* Mobile sticky bottom ad */}
-      <AdBanner size="mobile" label={false} />
 
       {/* Related articles grid */}
       {topRelated.length > 0 && (
