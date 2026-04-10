@@ -2,88 +2,56 @@ name: PulseAfrica Auto Publish
 
 on:
   schedule:
-    # Session 1 — Midnight CAT (10 PM UTC)
-    - cron: '0 22 * * *'    # politics
-    - cron: '15 22 * * *'   # sports
-    - cron: '30 22 * * *'   # entertainment
-    - cron: '45 22 * * *'   # africa
-    - cron: '0 23 * * *'    # technology
-    - cron: '15 23 * * *'   # business
-    # Session 2 — 10 AM CAT (8 AM UTC)
-    - cron: '0 8 * * *'     # politics
-    - cron: '15 8 * * *'    # sports
-    - cron: '30 8 * * *'    # entertainment
-    - cron: '45 8 * * *'    # africa
-    - cron: '0 9 * * *'     # technology
-    - cron: '15 9 * * *'    # business
-    # Session 3 — 6 PM CAT (4 PM UTC)
-    - cron: '0 16 * * *'    # politics
-    - cron: '15 16 * * *'   # sports
-    - cron: '30 16 * * *'   # entertainment
-    - cron: '45 16 * * *'   # africa
-    - cron: '0 17 * * *'    # technology
-    - cron: '15 17 * * *'   # business
+    - cron: '0 22 * * *'
+    - cron: '0 8 * * *'
+    - cron: '0 16 * * *'
   workflow_dispatch:
-    inputs:
-      category:
-        description: 'Category to generate'
-        required: true
-        default: 'politics'
-        type: choice
-        options:
-          - politics
-          - sports
-          - entertainment
-          - africa
-          - technology
-          - business
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
-      - name: Determine category and publish
+      - name: Generate all 6 categories
         run: |
-          # Manual trigger
-          if [ -n "${{ github.event.inputs.category }}" ]; then
-            CAT="${{ github.event.inputs.category }}"
-          else
-            # Determine category from schedule time
-            HOUR=$(date -u +%H)
-            MIN=$(date -u +%M)
-            echo "UTC: ${HOUR}:${MIN}"
+          BASE="https://pulse-africa.vercel.app/api/cron"
+          AUTH="Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          CATS=("politics" "sports" "entertainment" "africa" "technology" "business")
+          SUCCESS=0
+          FAILED=0
 
-            if [ "$MIN" -ge 0 ] && [ "$MIN" -lt 15 ]; then
-              SLOT=0
-            elif [ "$MIN" -ge 15 ] && [ "$MIN" -lt 30 ]; then
-              SLOT=1
-            elif [ "$MIN" -ge 30 ] && [ "$MIN" -lt 45 ]; then
-              SLOT=2
+          echo "🚀 PulseAfrica Session — $(date -u)"
+          echo "=================================="
+
+          for CAT in "${CATS[@]}"; do
+            echo ""
+            echo "→ Generating: $CAT"
+
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -H "$AUTH" \
+              --max-time 60 \
+              --connect-timeout 10 \
+              "$BASE?cat=$CAT")
+
+            HTTP=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | head -n-1)
+
+            if echo "$BODY" | grep -q '"success":true'; then
+              TITLE=$(echo "$BODY" | grep -o '"title":"[^"]*"' | cut -d'"' -f4)
+              echo "✅ $CAT: $TITLE"
+              SUCCESS=$((SUCCESS + 1))
             else
-              SLOT=3
+              echo "⚠️ $CAT failed: $BODY"
+              FAILED=$((FAILED + 1))
             fi
 
-            CATS=("politics" "sports" "entertainment" "africa" "technology" "business")
-            CAT="${CATS[$SLOT]}"
-          fi
+            if [ "$CAT" != "business" ]; then
+              sleep 10
+            fi
+          done
 
-          echo "=== Generating: $CAT ==="
-
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 120 \
-            --connect-timeout 10 \
-            "https://pulse-africa.vercel.app/api/cron?cat=$CAT")
-
-          HTTP=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | head -n-1)
-
-          echo "HTTP: $HTTP"
-          echo "Response: $BODY"
-
-          if echo "$BODY" | grep -q '"success":true'; then
-            echo "✅ $CAT article saved!"
-          else
-            echo "⚠️ $CAT failed"
-          fi
+          echo ""
+          echo "=================================="
+          echo "✅ Generated: $SUCCESS/6"
+          echo "❌ Failed: $FAILED/6"
+          echo "=================================="
