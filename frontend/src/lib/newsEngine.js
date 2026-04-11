@@ -196,7 +196,7 @@ async function gnewsSearch(query, maxDays = 30) {
   const data = await res.json()
   return (data.articles || []).filter(a => {
     const age = (Date.now() - new Date(a.publishedAt).getTime()) / 86400000
-    return age <= maxDays && !isDuplicate(a.title)
+    return age <= maxDays && !isDuplicate(a.title) && !isSensitive(a)
   })
 }
 
@@ -221,7 +221,7 @@ async function newsdataSearch(query, category) {
   if (!res.ok) throw new Error(`NewsData ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title))
+    .filter(a => a.title && (a.description || a.content) && !isDuplicate(a.title) && !isSensitive(a))
     .map(a => ({
       title: a.title, description: a.description || '',
       content: a.content || a.description || '',
@@ -242,13 +242,36 @@ async function newsdataLatest(category) {
   if (!res.ok) throw new Error(`NewsData latest ${res.status}`)
   const data = await res.json()
   return (data.results || [])
-    .filter(a => a.title && !isDuplicate(a.title))
+    .filter(a => a.title && !isDuplicate(a.title) && !isSensitive(a))
     .map(a => ({
       title: a.title, description: a.description || '',
       content: a.content || a.description || '',
       source: a.source_id || 'African News',
       url: a.link || '', publishedAt: a.pubDate || new Date().toISOString(),
     }))
+}
+
+
+// ── Sensitive content filter ─────────────────────────────
+const SENSITIVE_KEYWORDS = [
+  'homosexual','homosexuality','gay rights','lesbian','lgbt','lgbtq',
+  'transgender','same-sex','queer','sodomy','circumcision','genital',
+  'masturbat','sexual abuse','rape','incest','prostitut','escort',
+  'strip club','pornograph','nude','nudity','sex worker','brothel',
+  'beheading','decapitat','genocide','ethnic cleansing',
+  'suicide bomb','child abuse','human trafficking',
+  'self-harm','suicide method','eating disorder',
+]
+
+function isSensitive(article) {
+  const text = [
+    article.title || '',
+    article.description || '',
+    article.content || '',
+  ].join(' ').toLowerCase()
+  const match = SENSITIVE_KEYWORDS.find(kw => text.includes(kw))
+  if (match) console.log(`[Filter] ⚠️ Blocked sensitive: "${match}" in "${article.title}"`)
+  return !!match
 }
 
 export async function fetchRealArticle(category) {
