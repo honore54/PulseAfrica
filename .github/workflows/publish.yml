@@ -10,7 +10,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Generate all 6 categories
         run: |
@@ -27,10 +27,9 @@ jobs:
             echo ""
             echo "→ Generating: $CAT"
 
-            # Use || true so timeout never kills the whole job
             RESPONSE=$(curl -s -w "\n%{http_code}" \
               -H "$AUTH" \
-              --max-time 90 \
+              --max-time 55 \
               --connect-timeout 10 \
               "$BASE?cat=$CAT" 2>/dev/null) || RESPONSE="timeout\n000"
 
@@ -47,7 +46,7 @@ jobs:
             fi
 
             if [ "$CAT" != "business" ]; then
-              sleep 10
+              sleep 5
             fi
           done
 
@@ -56,6 +55,4 @@ jobs:
           echo "✅ Generated: $SUCCESS/6"
           echo "❌ Failed: $FAILED/6"
           echo "=================================="
-
-          # Always exit 0 — partial success is still success
           exit 0
