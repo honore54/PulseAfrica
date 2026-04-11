@@ -1,3 +1,4 @@
+import { fetchSmartImage } from './imageService.js'
 import { getAuthorForCategory } from './authors.js'
 import slugify from 'slugify'
 
