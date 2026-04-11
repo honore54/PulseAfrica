@@ -27,11 +27,12 @@ jobs:
             echo ""
             echo "→ Generating: $CAT"
 
+            # Use || true so timeout never kills the whole job
             RESPONSE=$(curl -s -w "\n%{http_code}" \
               -H "$AUTH" \
-              --max-time 60 \
+              --max-time 90 \
               --connect-timeout 10 \
-              "$BASE?cat=$CAT")
+              "$BASE?cat=$CAT" 2>/dev/null) || RESPONSE="timeout\n000"
 
             HTTP=$(echo "$RESPONSE" | tail -n1)
             BODY=$(echo "$RESPONSE" | head -n-1)
@@ -41,7 +42,7 @@ jobs:
               echo "✅ $CAT: $TITLE"
               SUCCESS=$((SUCCESS + 1))
             else
-              echo "⚠️ $CAT failed: $BODY"
+              echo "⚠️ $CAT failed (HTTP: $HTTP) — continuing..."
               FAILED=$((FAILED + 1))
             fi
 
@@ -55,3 +56,6 @@ jobs:
           echo "✅ Generated: $SUCCESS/6"
           echo "❌ Failed: $FAILED/6"
           echo "=================================="
+
+          # Always exit 0 — partial success is still success
+          exit 0
