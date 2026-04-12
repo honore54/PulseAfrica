@@ -27,13 +27,23 @@ export async function GET(request) {
         const article = await generateArticle(cat)
         if (!article) continue
 
+        // Check duplicate by title similarity in DB
+        const titleWords = article.title_en
+          .toLowerCase()
+          .replace(/[^a-z0-9 ]/g, '')
+          .split(' ')
+          .filter(w => w.length > 4)
+          .slice(0, 4)
+          .join(' ')
+
         const { data: existing } = await admin
-          .from('articles').select('id')
-          .ilike('title_en', `%${article.title_en.slice(0, 40)}%`)
+          .from('articles')
+          .select('id, title_en')
+          .ilike('title_en', `%${titleWords}%`)
           .limit(1)
 
         if (existing?.length > 0) {
-          console.log(`[CRON] Duplicate — skipping`)
+          console.log(`[CRON] Duplicate detected: "${article.title_en.slice(0,50)}"`)
           continue
         }
 
