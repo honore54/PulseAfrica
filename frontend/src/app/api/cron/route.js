@@ -1,3 +1,53 @@
+async function isDuplicateInDB(title, admin) {
+  try {
+    // Extract 3 most unique words (over 4 chars) from title
+    const words = title
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .split(' ')
+      .filter(w => w.length > 4)
+      .slice(0, 3)
+
+    if (words.length === 0) return false
+
+    // Check each word combination against DB
+    for (const word of words) {
+      const { data } = await admin
+        .from('articles')
+        .select('id, title_en')
+        .ilike('title_en', `%${word}%`)
+        .limit(5)
+
+      if (data && data.length > 0) {
+        // Check if any result is truly similar (70%+ word overlap)
+        for (const existing of data) {
+          const existingWords = new Set(
+            existing.title_en.toLowerCase()
+              .replace(/[^a-z0-9 ]/g, ' ')
+              .split(' ')
+              .filter(w => w.length > 3)
+          )
+          const newWords = title.toLowerCase()
+            .replace(/[^a-z0-9 ]/g, ' ')
+            .split(' ')
+            .filter(w => w.length > 3)
+          
+          const overlap = newWords.filter(w => existingWords.has(w)).length
+          const similarity = overlap / Math.max(existingWords.size, newWords.length)
+          
+          if (similarity > 0.5) {
+            console.log(`[CRON] Duplicate found: "${title.slice(0,50)}" matches "${existing.title_en.slice(0,50)}"`)
+            return true
+          }
+        }
+      }
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
 import { generateArticle, CATEGORIES } from '@/lib/newsEngine'
 import { supabaseAdmin } from '@/lib/supabase'
 
@@ -27,23 +77,9 @@ export async function GET(request) {
         const article = await generateArticle(cat)
         if (!article) continue
 
-        // Check duplicate by title similarity in DB
-        const titleWords = article.title_en
-          .toLowerCase()
-          .replace(/[^a-z0-9 ]/g, '')
-          .split(' ')
-          .filter(w => w.length > 4)
-          .slice(0, 4)
-          .join(' ')
-
-        const { data: existing } = await admin
-          .from('articles')
-          .select('id, title_en')
-          .ilike('title_en', `%${titleWords}%`)
-          .limit(1)
-
-        if (existing?.length > 0) {
-          console.log(`[CRON] Duplicate detected: "${article.title_en.slice(0,50)}"`)
+        const isDup = await isDuplicateInDB(article.title_en, admin)
+        if (isDup) {
+          console.log(`[CRON] Duplicate skipped: "${article.title_en.slice(0,50)}"`)
           continue
         }
 
