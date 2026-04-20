@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# Tell Google not to index language parameter URLs
+Disallow: /*?lang=fr
+Disallow: /*?lang=rw
+
 Sitemap: https://pulse-africa.vercel.app/sitemap.xml

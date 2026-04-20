@@ -93,3 +93,4 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
+// already in file — just verify trailingSlash is false
